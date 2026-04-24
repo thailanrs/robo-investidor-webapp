@@ -120,17 +120,25 @@ export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult>
     const roe = (quote.financialData?.returnOnEquity || 0) * 100;
     const dyAtual = (quote.summaryDetail?.dividendYield || 0) * 100;
 
+    const safeCurrentPrice = Number(currentPrice) || 0;
+    const safePl = Number(pl) || 0;
+    const safeEvEbit = Number(evEbit) || 0;
+    const safeRoe = Number(roe) || 0;
+    const safeRentabilidade5A = Number(rentabilidade5A) || 0;
+    const safeDyAtual = Number(dyAtual) || 0;
+    const safeDyMedio5A = Number(dyMedio5A) || 0;
+
     return {
       Ticker: ticker,
       Setor: setor,
       Industria: industria,
-      "Cotação Atual": Number(currentPrice.toFixed(2)),
-      "P/L": Number(pl.toFixed(2)),
-      "EV/EBIT": Number(evEbit.toFixed(2)),
-      "ROE": Number(roe.toFixed(2)),
-      "Rentabilidade 5A (%)": Number(rentabilidade5A.toFixed(2)),
-      "DY Atual (%)": Number(dyAtual.toFixed(2)),
-      "DY 5A Médio (%)": Number(dyMedio5A.toFixed(2)),
+      "Cotação Atual": Number(safeCurrentPrice.toFixed(2)),
+      "P/L": Number(safePl.toFixed(2)),
+      "EV/EBIT": Number(safeEvEbit.toFixed(2)),
+      "ROE": Number(safeRoe.toFixed(2)),
+      "Rentabilidade 5A (%)": Number(safeRentabilidade5A.toFixed(2)),
+      "DY Atual (%)": Number(safeDyAtual.toFixed(2)),
+      "DY 5A Médio (%)": Number(safeDyMedio5A.toFixed(2)),
     };
 
   } catch (error) {
