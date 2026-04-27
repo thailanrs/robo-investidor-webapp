@@ -43,7 +43,7 @@ export function UserDropdown() {
 
     // Setup auth listener
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (session?.user) {
         setUser(session.user);
         const { data: profileData } = await supabase
