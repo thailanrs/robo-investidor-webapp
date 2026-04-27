@@ -3,7 +3,19 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { headers } from 'next/headers'
+
+const getURL = () => {
+  let url =
+    process?.env?.NEXT_PUBLIC_SITE_URL ??
+    process?.env?.NEXT_PUBLIC_VERCEL_URL ??
+    'http://localhost:3000/'
+  
+  // Inclui https:// se não for localhost
+  url = url.includes('http') ? url : `https://${url}`
+  // Remove trailing slash se houver
+  url = url.replace(/\/$/, '')
+  return url
+}
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -25,7 +37,6 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
-  const origin = (await headers()).get('origin')
 
   const data = {
     email: formData.get('email') as string,
@@ -35,7 +46,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${getURL()}/auth/callback`,
     },
   })
 
@@ -48,12 +59,11 @@ export async function signup(formData: FormData) {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
-  const origin = (await headers()).get('origin')
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${getURL()}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
