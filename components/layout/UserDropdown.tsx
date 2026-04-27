@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { User, LogOut, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/utils/supabase/client";
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +13,7 @@ export function UserDropdown() {
 
   useEffect(() => {
     async function loadUser() {
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
@@ -34,6 +35,7 @@ export function UserDropdown() {
     loadUser();
 
     // Setup auth listener
+    const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user);
@@ -53,6 +55,7 @@ export function UserDropdown() {
   }, []);
 
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     window.location.href = "/";
   };

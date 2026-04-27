@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 export type TransactionType = 'COMPRA' | 'VENDA';
 
@@ -14,6 +14,7 @@ export interface Transaction {
 }
 
 export async function fetchTransactions(userId: string) {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
@@ -28,6 +29,7 @@ export async function fetchTransactions(userId: string) {
 }
 
 export async function insertTransaction(transaction: Omit<Transaction, 'id' | 'created_at'>) {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from('transactions')
     .insert([transaction])
@@ -41,6 +43,7 @@ export async function insertTransaction(transaction: Omit<Transaction, 'id' | 'c
 }
 
 export async function deleteTransaction(id: string) {
+  const supabase = createClient();
   const { error } = await supabase
     .from('transactions')
     .delete()
