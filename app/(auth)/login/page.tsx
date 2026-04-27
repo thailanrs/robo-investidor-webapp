@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { login, signup, signInWithGoogle } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,67 +9,73 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Bot } from 'lucide-react'
 
 export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true)
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
-      <Card className="w-full max-w-md border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
+      <Card className="w-full max-w-md border-zinc-800 bg-zinc-900">
         <CardHeader className="space-y-1 items-center">
           <div className="bg-indigo-600 p-2 rounded-lg mb-2">
             <Bot className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Acessar Conta
+          <CardTitle className="text-2xl font-bold tracking-tight text-zinc-50">
+            {isLogin ? 'Acessar Conta' : 'Criar Conta'}
           </CardTitle>
-          <CardDescription className="text-zinc-500 dark:text-zinc-400">
-            Entre para gerenciar sua carteira e análises
+          <CardDescription className="text-zinc-400">
+            {isLogin ? 'Entre para gerenciar sua carteira e análises' : 'Cadastre-se para acessar a plataforma'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-zinc-700 dark:text-zinc-300">Email</Label>
+              <Label htmlFor="email" className="text-zinc-300">Email</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 placeholder="seu@email.com"
                 required
-                className="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 focus-visible:ring-indigo-500"
+                className="bg-zinc-950 border-zinc-800 text-zinc-50 focus-visible:ring-indigo-500"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-zinc-700 dark:text-zinc-300">Senha</Label>
+              <Label htmlFor="password" className="text-zinc-300">Senha</Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-800 focus-visible:ring-indigo-500"
+                className="bg-zinc-950 border-zinc-800 text-zinc-50 focus-visible:ring-indigo-500"
               />
             </div>
-            <div className="flex gap-2 pt-2">
+            <div className="pt-2">
               <button
                 type="submit"
-                formAction={login}
+                formAction={isLogin ? login : signup}
                 className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
               >
-                Entrar
-              </button>
-              <button
-                type="submit"
-                formAction={signup}
-                className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                Cadastrar
+                {isLogin ? 'Entrar' : 'Cadastrar'}
               </button>
             </div>
           </form>
 
-          <div className="relative">
+          <div className="text-center text-sm text-zinc-400 mt-4">
+            {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4"
+            >
+              {isLogin ? "Criar Conta" : "Entrar"}
+            </button>
+          </div>
+
+          <div className="relative mt-6 mb-4">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+              <span className="w-full border-t border-zinc-800" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-500 dark:text-zinc-400">
+              <span className="bg-zinc-900 px-2 text-zinc-400">
                 Ou continue com
               </span>
             </div>
@@ -76,7 +85,7 @@ export default function LoginPage() {
             <form action={signInWithGoogle} className="w-full">
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50"
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path
