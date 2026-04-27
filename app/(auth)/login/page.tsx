@@ -44,10 +44,10 @@ export default function LoginPage() {
               />
             </div>
             <div className="flex gap-2 pt-2">
-              <Button formAction={login} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button type="submit" formAction={login} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
                 Entrar
               </Button>
-              <Button formAction={signup} variant="outline" className="w-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              <Button type="submit" formAction={signup} variant="outline" className="w-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                 Cadastrar
               </Button>
             </div>

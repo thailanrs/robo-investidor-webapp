@@ -33,7 +33,14 @@ export function ProfileForm() {
     async function getProfile() {
       try {
         const supabase = createClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        let authResult = await supabase.auth.getUser();
+        
+        if (authResult.error?.message?.includes('stole it')) {
+          await new Promise(r => setTimeout(r, 500));
+          authResult = await supabase.auth.getUser();
+        }
+
+        const { data: { user }, error: authError } = authResult;
         if (authError || !user) throw new Error("Usuário não logado");
         setUser(user);
 

@@ -14,7 +14,14 @@ export function UserDropdown() {
   useEffect(() => {
     async function loadUser() {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let authResult = await supabase.auth.getSession();
+      
+      if (authResult.error?.message?.includes('stole it')) {
+        await new Promise(r => setTimeout(r, 500));
+        authResult = await supabase.auth.getSession();
+      }
+      
+      const { data: { session } } = authResult;
       if (session?.user) {
         setUser(session.user);
         

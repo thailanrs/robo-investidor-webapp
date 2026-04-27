@@ -15,12 +15,20 @@ export default function LancamentosPage() {
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Busca o usuário logado e depois suas transações
   useEffect(() => {
     async function loadData() {
       try {
         const supabase = createClient();
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        let authResult = await supabase.auth.getSession();
+        
+        // Em modo de desenvolvimento com Strict Mode, requisições simultâneas podem gerar 
+        // um erro de "lock stolen". Fazemos um breve retry caso isso ocorra.
+        if (authResult.error?.message?.includes('stole it')) {
+          await new Promise(r => setTimeout(r, 500));
+          authResult = await supabase.auth.getSession();
+        }
+        
+        const { data: { session }, error: authError } = authResult;
         
         if (authError || !session?.user) {
           setError("Você precisa estar logado para acessar os lançamentos.");
