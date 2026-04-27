@@ -14,22 +14,22 @@ export function UserDropdown() {
   useEffect(() => {
     async function loadUser() {
       const supabase = createClient();
-      let authResult = await supabase.auth.getSession();
+      let authResult = await supabase.auth.getUser();
       
       if (authResult.error?.message?.includes('stole it')) {
         await new Promise(r => setTimeout(r, 500));
-        authResult = await supabase.auth.getSession();
+        authResult = await supabase.auth.getUser();
       }
       
-      const { data: { session } } = authResult;
-      if (session?.user) {
-        setUser(session.user);
+      const { data: { user } } = authResult;
+      if (user) {
+        setUser(user);
         
         // Fetch profile
         const { data: profileData } = await supabase
           .from("profiles")
           .select("nome_completo, avatar_url")
-          .eq("id", session.user.id)
+          .eq("id", user.id)
           .single();
           
         if (profileData) {

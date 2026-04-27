@@ -21,7 +21,8 @@ export default function LancamentosPage() {
         console.log('[DEBUG] loadData iniciou');
         const supabase = createClient();
         console.log('[DEBUG] createClient executado');
-        let authResult = await supabase.auth.getSession();
+        
+        let authResult = await supabase.auth.getUser();
         console.log('[DEBUG] authResult recebido', authResult);
         
         // Em modo de desenvolvimento com Strict Mode, requisições simultâneas podem gerar 
@@ -29,20 +30,19 @@ export default function LancamentosPage() {
         if (authResult.error?.message?.includes('stole it')) {
           console.log('[DEBUG] Lock stole error, retrying...');
           await new Promise(r => setTimeout(r, 500));
-          authResult = await supabase.auth.getSession();
+          authResult = await supabase.auth.getUser();
           console.log('[DEBUG] authResult recebido (retry)', authResult);
         }
         
-        const { data: { session }, error: authError } = authResult;
+        const { data: { user }, error: authError } = authResult;
         
-        if (authError || !session?.user) {
+        if (authError || !user) {
           console.log('[DEBUG] Usuário não logado ou erro', authError);
           setError("Você precisa estar logado para acessar os lançamentos.");
           setIsLoading(false);
           return;
         }
 
-        const user = session.user;
         console.log('[DEBUG] Usuário obtido:', user.id);
 
         setUserId(user.id);
