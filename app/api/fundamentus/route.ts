@@ -109,15 +109,11 @@ export async function fetchFundamentusData(): Promise<string[]> {
   // Financeiras: Melhor P/L e Melhor ROE
   const rankedFinanceiras = rankMagicFormula(financeiras, 'pl');
 
-  // 4. Seleção do Top X
-  const topReais = rankedReais.slice(0, 60);
-  const topFinanceiras = rankedFinanceiras.slice(0, 30);
-
-  // 5. Formatação do array final de Tickers com o sufixo '.SA'
+  // 4. Seleção do Top X (Reais e Financeiras)
   return [
-    ...topReais.map(s => `${s.ticker}.SA`),
-    ...topFinanceiras.map(s => `${s.ticker}.SA`)
-  ];
+    ...rankedReais.slice(0, 60),
+    ...rankedFinanceiras.slice(0, 30)
+  ].map(s => s.ticker);
 }
 
 export async function GET() {
