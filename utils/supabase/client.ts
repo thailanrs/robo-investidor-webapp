@@ -1,16 +1,22 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-let supabase: ReturnType<typeof createBrowserClient> | undefined
+const globalForSupabase = globalThis as unknown as {
+  supabaseBrowserClient: ReturnType<typeof createBrowserClient> | undefined
+}
 
 export function createClient() {
-  if (supabase) {
-    return supabase
+  if (globalForSupabase.supabaseBrowserClient) {
+    return globalForSupabase.supabaseBrowserClient
   }
 
-  supabase = createBrowserClient(
+  const client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  return supabase
+  if (process.env.NODE_ENV !== "production") {
+    globalForSupabase.supabaseBrowserClient = client
+  }
+
+  return client
 }

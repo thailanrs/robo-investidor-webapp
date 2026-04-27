@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/server'
 
 const getURL = () => {
   if (process.env.NODE_ENV === 'development') {
+    console.log('[DEBUG getURL] Environment is development, returning localhost:3000');
     return 'http://localhost:3000'
   }
   let url =
@@ -18,6 +19,7 @@ const getURL = () => {
   url = url.includes('http') ? url : `https://${url}`
   // Remove trailing slash se houver
   url = url.replace(/\/$/, '')
+  console.log('[DEBUG getURL] Returning URL:', url);
   return url
 }
 
