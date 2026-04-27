@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { TransactionForm, TransactionFormData } from "@/components/TransactionForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { Transaction, fetchTransactions, insertTransaction, deleteTransaction } from "@/lib/transactions";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/utils/supabase/client";
 import { Loader2, Plus } from "lucide-react";
 
 export default function LancamentosPage() {
@@ -19,13 +19,16 @@ export default function LancamentosPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const supabase = createClient();
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
         
-        if (authError || !user) {
+        if (authError || !session?.user) {
           setError("Você precisa estar logado para acessar os lançamentos.");
           setIsLoading(false);
           return;
         }
+
+        const user = session.user;
 
         setUserId(user.id);
         const data = await fetchTransactions(user.id);

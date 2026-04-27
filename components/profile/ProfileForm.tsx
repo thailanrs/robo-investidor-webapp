@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, Upload, User as UserIcon } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/utils/supabase/client";
 
 const profileSchema = z.object({
   nome_completo: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
@@ -32,6 +32,7 @@ export function ProfileForm() {
   useEffect(() => {
     async function getProfile() {
       try {
+        const supabase = createClient();
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) throw new Error("Usuário não logado");
         setUser(user);
@@ -61,6 +62,7 @@ export function ProfileForm() {
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
+      const supabase = createClient();
       setUploading(true);
       setMessage(null);
 
@@ -108,6 +110,7 @@ export function ProfileForm() {
   const onSubmit = async (data: ProfileFormData) => {
     setMessage(null);
     try {
+      const supabase = createClient();
       if (!user) throw new Error("Sessão inválida");
 
       const { error } = await supabase
