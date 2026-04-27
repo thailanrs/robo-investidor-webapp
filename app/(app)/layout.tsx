@@ -1,14 +1,9 @@
-import { Navbar } from "@/components/Navbar";
+import { AppLayout } from "@/components/layout/AppLayout";
 
-export default function AppLayout({
+export default function AuthAppLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      <Navbar />
-      {children}
-    </>
-  );
+  return <AppLayout>{children}</AppLayout>;
 }
