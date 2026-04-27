@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchFundamentusData } from '../fundamentus/route';
 import { analisarAtivo, AnaliseAtivoResult } from '@/lib/yahooFinanceService';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60; // Permite que a API Vercel rode por até 60s (necessário para múltiplos fetches)
@@ -14,6 +14,7 @@ type TickerResult = Exclude<AnaliseAtivoResult, null> & {
 
 export async function GET() {
   try {
+    const supabase = await createClient();
     // 1. Obtém os 90 tickers preliminares da Fórmula Mágica (Fundamentus)
     const tickers = await fetchFundamentusData();
     
