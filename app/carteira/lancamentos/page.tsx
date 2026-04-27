@@ -18,32 +18,42 @@ export default function LancamentosPage() {
   useEffect(() => {
     async function loadData() {
       try {
+        console.log('[DEBUG] loadData iniciou');
         const supabase = createClient();
+        console.log('[DEBUG] createClient executado');
         let authResult = await supabase.auth.getSession();
+        console.log('[DEBUG] authResult recebido', authResult);
         
         // Em modo de desenvolvimento com Strict Mode, requisições simultâneas podem gerar 
         // um erro de "lock stolen". Fazemos um breve retry caso isso ocorra.
         if (authResult.error?.message?.includes('stole it')) {
+          console.log('[DEBUG] Lock stole error, retrying...');
           await new Promise(r => setTimeout(r, 500));
           authResult = await supabase.auth.getSession();
+          console.log('[DEBUG] authResult recebido (retry)', authResult);
         }
         
         const { data: { session }, error: authError } = authResult;
         
         if (authError || !session?.user) {
+          console.log('[DEBUG] Usuário não logado ou erro', authError);
           setError("Você precisa estar logado para acessar os lançamentos.");
           setIsLoading(false);
           return;
         }
 
         const user = session.user;
+        console.log('[DEBUG] Usuário obtido:', user.id);
 
         setUserId(user.id);
         const data = await fetchTransactions(user.id);
+        console.log('[DEBUG] Transações recebidas', data.length);
         setTransactions(data);
       } catch (err: any) {
+        console.error("[DEBUG] Erro em loadData:", err);
         setError("Erro ao carregar dados: " + err.message);
       } finally {
+        console.log('[DEBUG] loadData finally block');
         setIsLoading(false);
       }
     }
