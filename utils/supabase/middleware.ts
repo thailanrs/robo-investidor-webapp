@@ -31,12 +31,24 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    request.nextUrl.pathname.startsWith('/carteira')
-  ) {
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/auth/callback');
+  const isPublicApiRoute = pathname.startsWith('/api'); // Assume APIs might have their own protection, or exclude them from redirect loops. For this, we'll let APIs handle their own auth except if needed.
+
+  // Protect all non-auth and non-api routes by default if we want a fully private app.
+  // The ticket specifically mentions /, /historico and /carteira
+  const isProtectedRoute = pathname === '/' || pathname.startsWith('/historico') || pathname.startsWith('/carteira');
+
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect logged-in users away from the login page
+  if (user && pathname === '/login') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
