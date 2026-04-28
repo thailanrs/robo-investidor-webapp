@@ -28,4 +28,5 @@
 * **Preço Médio Ponderado:** Calculado apenas sobre operações de COMPRA: `PM = (Σ qtd_compra × preço_compra) / Σ qtd_compra`. Operações de VENDA reduzem a quantidade em carteira mas **NÃO** alteram o preço médio. Engine em `lib/portfolio.ts`.
 
 ## Trabalho em Progresso
-* [ ] HU 1.5 - Implementar Dashboard com Análise Quantitativa
+* [x] HU 1.5 - Implementar Dashboard com Análise Quantitativa
+* [x] [Dashboard] Gráficos de Composição de Carteira e Evolução
