@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { fetchFundamentusData } from '../fundamentus/route';
 import { analisarAtivo, AnaliseAtivoResult } from '@/lib/yahooFinanceService';
 import { createClient } from '@/utils/supabase/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60; // Permite que a API Vercel rode por até 60s (necessário para múltiplos fetches)
 
@@ -38,7 +37,7 @@ export async function GET() {
 
     const settledResults = await Promise.allSettled(promises);
 
-    // 3. Filtra apenas os sucessos válidos
+    // 3. Filtra apenas os sucessos válidos (que não retornaram null)
     const validResults: TickerResult[] = settledResults
       .filter((r): r is PromiseFulfilledResult<TickerResult> => r.status === 'fulfilled' && r.value !== null)
       .map(r => r.value);
@@ -79,31 +78,10 @@ export async function GET() {
     finalistasAgrupadas.sort((a, b) => (a.notaTotal || 0) - (b.notaTotal || 0));
     const finalistas = finalistasAgrupadas.slice(0, 15);
 
-    // 8. Gerar Insight de Especialista com IA (Gemini)
-    let resumoIA = "";
-    try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (apiKey && finalistas.length > 0) {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const top3 = finalistas.slice(0, 3);
-        const dadosFormatados = top3.map((acao: any, index: number) => {
-          return `${index + 1}. ${acao.Ticker} (${acao.Setor}): Cotação R$${acao['Cotação Atual']}, P/L ${acao['P/L']}, EV/EBIT ${acao['EV/EBIT']}, ROE ${acao['ROE']}%, Rentabilidade 5A ${acao['Rentabilidade 5A (%)']}%, DY Médio 5A ${acao['DY 5A Médio (%)']}%`;
-        }).join('\n');
-
-        const prompt = `Atue como um analista financeiro sênior. Baseado nestes dados quantitativos:\n[DADOS]\n${dadosFormatados}\n\nEscreva um 'Insight de Especialista' de no máximo 2 parágrafos, explicando por que essas empresas são boas escolhas hoje, pagadoras de dividendos e estão descontadas na Fórmula Mágica.`;
-
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const result = await model.generateContent(prompt);
-        resumoIA = result.response.text();
-      }
-    } catch (e) {
-      console.error("Erro ao gerar resumo IA:", e);
-    }
-
-    // 9. Salvar no Histórico do Supabase
+    // 8. Salvar no Histórico do Supabase
     try {
       const { error: dbError } = await supabase.from('historico_analises').insert([
-        { dados_acoes: finalistas, resumo_ia: resumoIA }
+        { dados_acoes: finalistas, resumo_ia: "" }
       ]);
       
       if (dbError) {
@@ -115,8 +93,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: finalistas,
-      resumo_ia: resumoIA
+      data: finalistas
     });
 
   } catch (error: any) {
