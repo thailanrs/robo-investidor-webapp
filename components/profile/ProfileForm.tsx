@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, Upload, User as UserIcon } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { useUser } from "@/contexts/UserContext";
 
 const profileSchema = z.object({
   nome_completo: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
@@ -14,10 +15,10 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function ProfileForm() {
-  const [user, setUser] = useState<any>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const user = useUser();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.profile?.avatar_url || null);
   const [uploading, setUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const {
@@ -27,45 +28,10 @@ export function ProfileForm() {
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+      nome_completo: user.profile?.nome_completo || "",
+    },
   });
-
-  useEffect(() => {
-    async function getProfile() {
-      try {
-        const supabase = createClient();
-        let authResult = await supabase.auth.getUser();
-        
-        if (authResult.error?.message?.includes('stole it')) {
-          await new Promise(r => setTimeout(r, 500));
-          authResult = await supabase.auth.getUser();
-        }
-
-        const { data: { user }, error: authError } = authResult;
-        if (authError || !user) throw new Error("Usuário não logado");
-        setUser(user);
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("nome_completo, avatar_url")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError && profileError.code !== 'PGRST116') {
-          throw profileError;
-        }
-
-        if (profile) {
-          setValue("nome_completo", profile.nome_completo || "");
-          setAvatarUrl(profile.avatar_url);
-        }
-      } catch (error: any) {
-        console.error("Erro ao buscar perfil:", error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    getProfile();
-  }, [setValue]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -118,7 +84,6 @@ export function ProfileForm() {
     setMessage(null);
     try {
       const supabase = createClient();
-      if (!user) throw new Error("Sessão inválida");
 
       const { error } = await supabase
         .from("profiles")
@@ -214,7 +179,7 @@ export function ProfileForm() {
           </label>
           <input
             type="text"
-            value={user?.email || ""}
+            value={user.email || ""}
             disabled
             className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-zinc-500 dark:text-zinc-500 text-sm cursor-not-allowed"
           />

@@ -1,93 +1,23 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { User, LogOut, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { usePathname } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
 
 export function UserDropdown() {
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  async function loadUser() {
-    const supabase = createClient();
-    let authResult = await supabase.auth.getUser();
-    
-    if (authResult.error?.message?.includes('stole it')) {
-      await new Promise(r => setTimeout(r, 500));
-      authResult = await supabase.auth.getUser();
-    }
-    
-    const { data: { user } } = authResult;
-    if (user) {
-      setUser(user);
-      
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("nome_completo, avatar_url")
-        .eq("id", user.id)
-        .single();
-        
-      if (profileData) {
-        setProfile(profileData);
-      }
-    } else {
-      setUser(null);
-      setProfile(null);
-    }
-    setIsLoading(false);
-  }
-
-  useEffect(() => {
-    loadUser();
-  }, [pathname]);
-
-  useEffect(() => {
-    // Setup auth listener
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("nome_completo, avatar_url")
-          .eq("id", session.user.id)
-          .single();
-        if (profileData) setProfile(profileData);
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const user = useUser();
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
-  if (isLoading) {
-    return <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />;
-  }
-
-  if (!user) {
-    return (
-      <Link href="/login" className="text-sm font-medium hover:text-emerald-500 transition-colors">
-        Entrar
-      </Link>
-    );
-  }
-
-  const avatarUrl = profile?.avatar_url || null;
-  const displayName = profile?.nome_completo || user.email?.split("@")[0] || "Usuário";
+  const avatarUrl = user.profile?.avatar_url || null;
+  const displayName = user.profile?.nome_completo || user.email?.split("@")[0] || "Usuário";
   const initials = displayName.substring(0, 2).toUpperCase();
 
   return (

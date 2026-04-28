@@ -4,13 +4,13 @@ import React, { useEffect, useState } from "react";
 import { TransactionForm, TransactionFormData } from "@/components/TransactionForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { Transaction, fetchTransactions, insertTransaction, deleteTransaction } from "@/lib/transactions";
-import { createClient } from "@/utils/supabase/client";
 import { Loader2, Plus } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 export default function LancamentosPage() {
+  const user = useUser();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -18,55 +18,23 @@ export default function LancamentosPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        console.log('[DEBUG] loadData iniciou');
-        const supabase = createClient();
-        console.log('[DEBUG] createClient executado');
-        
-        let authResult = await supabase.auth.getUser();
-        console.log('[DEBUG] authResult recebido', authResult);
-        
-        // Em modo de desenvolvimento com Strict Mode, requisições simultâneas podem gerar 
-        // um erro de "lock stolen". Fazemos um breve retry caso isso ocorra.
-        if (authResult.error?.message?.includes('stole it')) {
-          console.log('[DEBUG] Lock stole error, retrying...');
-          await new Promise(r => setTimeout(r, 500));
-          authResult = await supabase.auth.getUser();
-          console.log('[DEBUG] authResult recebido (retry)', authResult);
-        }
-        
-        const { data: { user }, error: authError } = authResult;
-        
-        if (authError || !user) {
-          console.log('[DEBUG] Usuário não logado ou erro', authError);
-          setError("Você precisa estar logado para acessar os lançamentos.");
-          setIsLoading(false);
-          return;
-        }
-
-        console.log('[DEBUG] Usuário obtido:', user.id);
-
-        setUserId(user.id);
         const data = await fetchTransactions(user.id);
-        console.log('[DEBUG] Transações recebidas', data.length);
         setTransactions(data);
       } catch (err: any) {
-        console.error("[DEBUG] Erro em loadData:", err);
+        console.error("Erro em loadData:", err);
         setError("Erro ao carregar dados: " + err.message);
       } finally {
-        console.log('[DEBUG] loadData finally block');
         setIsLoading(false);
       }
     }
 
     loadData();
-  }, []);
+  }, [user.id]);
 
   const handleAddTransaction = async (formData: TransactionFormData) => {
-    if (!userId) throw new Error("Usuário não autenticado.");
-
     const newTx = await insertTransaction({
       ...formData,
-      user_id: userId,
+      user_id: user.id,
     });
 
     // Atualiza a lista localmente
@@ -96,16 +64,7 @@ export default function LancamentosPage() {
     );
   }
 
-  if (error && !userId) {
-    return (
-      <div className="container mx-auto p-6 max-w-5xl mt-10">
-        <div className="p-6 bg-red-100/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-center">
-          <p className="font-medium text-lg mb-2">Acesso Negado</p>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="container mx-auto p-6 max-w-5xl space-y-8 mt-4">
