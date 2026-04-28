@@ -1,22 +1,26 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-const globalForSupabase = globalThis as unknown as {
-  supabaseBrowserClient: ReturnType<typeof createBrowserClient> | undefined
-}
+let client: ReturnType<typeof createBrowserClient> | undefined
 
 export function createClient() {
-  if (globalForSupabase.supabaseBrowserClient) {
-    return globalForSupabase.supabaseBrowserClient
+  if (client) {
+    return client
   }
 
-  const client = createBrowserClient(
+  client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        // Desativa a Web Locks API para evitar deadlocks.
+        // A sessão é gerenciada server-side via cookies no middleware,
+        // então o lock client-side é desnecessário.
+        lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
+          return fn()
+        },
+      }
+    }
   )
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForSupabase.supabaseBrowserClient = client
-  }
 
   return client
 }
