@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
-import { TransactionType } from "@/lib/transactions";
+import { Transaction, TransactionType } from "@/lib/transactions";
 
 const transactionSchema = z.object({
   ticker: z.string().min(4, "O ticker deve ter pelo menos 4 caracteres.").toUpperCase(),
   type: z.enum(["COMPRA", "VENDA"]),
   quantity: z.number().positive("A quantidade deve ser maior que zero."),
   unit_price: z.number().nonnegative("O preço deve ser maior ou igual a zero."),
+  other_costs: z.number().nonnegative("Os custos devem ser maior ou igual a zero."),
   date: z.string().min(1, "A data é obrigatória."),
 });
 
@@ -19,11 +20,14 @@ export type TransactionFormData = z.infer<typeof transactionSchema>;
 
 interface TransactionFormProps {
   onSubmit: (data: TransactionFormData) => Promise<void>;
+  initialData?: Transaction;
+  onCancel?: () => void;
 }
 
-export function TransactionForm({ onSubmit }: TransactionFormProps) {
+export function TransactionForm({ onSubmit, initialData, onCancel }: TransactionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isEditing = !!initialData;
 
   const {
     register,
@@ -32,13 +36,23 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
     formState: { errors },
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      ticker: "",
-      type: "COMPRA",
-      quantity: 1,
-      unit_price: 0,
-      date: new Date().toISOString().split("T")[0],
-    },
+    defaultValues: initialData
+      ? {
+          ticker: initialData.ticker,
+          type: initialData.type,
+          quantity: initialData.quantity,
+          unit_price: initialData.unit_price,
+          other_costs: initialData.other_costs || 0,
+          date: initialData.date,
+        }
+      : {
+          ticker: "",
+          type: "COMPRA",
+          quantity: 1,
+          unit_price: 0,
+          other_costs: 0,
+          date: new Date().toISOString().split("T")[0],
+        },
   });
 
   const onSubmitHandler = async (data: TransactionFormData) => {
@@ -46,7 +60,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
     setError(null);
     try {
       await onSubmit(data);
-      reset();
+      if (!isEditing) reset();
     } catch (err: any) {
       setError(err.message || "Erro ao salvar transação.");
     } finally {
@@ -61,10 +75,10 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
     >
       <div>
         <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-50 mb-1">
-          Novo Lançamento
+          {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
         </h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-          Adicione uma nota de corretagem à sua carteira.
+          {isEditing ? "Altere os dados e clique em salvar." : "Adicione uma nota de corretagem à sua carteira."}
         </p>
       </div>
 
@@ -140,8 +154,26 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
           )}
         </div>
 
+        {/* Outros Custos */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Outros Custos (R$)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            {...register("other_costs", { valueAsNumber: true })}
+            className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+            placeholder="0.00"
+          />
+          <p className="text-xs text-zinc-400">Taxas, emolumentos, corretagem, etc.</p>
+          {errors.other_costs && (
+            <p className="text-xs text-red-500">{errors.other_costs.message}</p>
+          )}
+        </div>
+
         {/* Data */}
-        <div className="space-y-1 md:col-span-2">
+        <div className="space-y-1">
           <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Data do Lançamento
           </label>
@@ -156,20 +188,31 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 flex gap-3">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full md:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" /> Salvando...
             </>
+          ) : isEditing ? (
+            "Salvar Alterações"
           ) : (
             "Registrar Transação"
           )}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-sm"
+          >
+            Cancelar
+          </button>
+        )}
       </div>
     </form>
   );

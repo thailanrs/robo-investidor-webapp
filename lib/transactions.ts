@@ -9,6 +9,7 @@ export interface Transaction {
   type: TransactionType;
   quantity: number;
   unit_price: number;
+  other_costs: number;
   date: string;
   created_at?: string;
 }
@@ -37,6 +38,21 @@ export async function insertTransaction(transaction: Omit<Transaction, 'id' | 'c
 
   if (error) {
     throw new Error(`Erro ao inserir transação: ${error.message}`);
+  }
+
+  return data?.[0] as Transaction;
+}
+
+export async function updateTransaction(id: string, transaction: Partial<Omit<Transaction, 'id' | 'created_at' | 'user_id'>>) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .update(transaction)
+    .eq('id', id)
+    .select();
+
+  if (error) {
+    throw new Error(`Erro ao atualizar transação: ${error.message}`);
   }
 
   return data?.[0] as Transaction;

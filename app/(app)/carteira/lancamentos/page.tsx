@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { TransactionForm, TransactionFormData } from "@/components/TransactionForm";
 import { TransactionTable } from "@/components/TransactionTable";
-import { Transaction, fetchTransactions, insertTransaction, deleteTransaction } from "@/lib/transactions";
+import { Transaction, fetchTransactions, insertTransaction, updateTransaction, deleteTransaction } from "@/lib/transactions";
 import { Loader2, Plus } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 
@@ -14,6 +14,7 @@ export default function LancamentosPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -37,9 +38,31 @@ export default function LancamentosPage() {
       user_id: user.id,
     });
 
-    // Atualiza a lista localmente
     setTransactions((prev) => [newTx, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setShowForm(false);
+  };
+
+  const handleEditTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setShowForm(true);
+  };
+
+  const handleUpdateTransaction = async (formData: TransactionFormData) => {
+    if (!editingTransaction?.id) return;
+
+    const updated = await updateTransaction(editingTransaction.id, formData);
+
+    setTransactions((prev) =>
+      prev.map((tx) => (tx.id === updated.id ? updated : tx))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
+    setEditingTransaction(null);
+    setShowForm(false);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingTransaction(null);
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -64,10 +87,8 @@ export default function LancamentosPage() {
     );
   }
 
-
-
   return (
-    <div className="container mx-auto p-6 max-w-5xl space-y-8 mt-4">
+    <div className="container mx-auto p-6 max-w-6xl space-y-8 mt-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -81,7 +102,10 @@ export default function LancamentosPage() {
 
         {!showForm && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setEditingTransaction(null);
+              setShowForm(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -99,16 +123,11 @@ export default function LancamentosPage() {
       {/* Form Section */}
       {showForm && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Adicionar Transação</h2>
-            <button 
-              onClick={() => setShowForm(false)}
-              className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-            >
-              Cancelar
-            </button>
-          </div>
-          <TransactionForm onSubmit={handleAddTransaction} />
+          <TransactionForm
+            onSubmit={editingTransaction ? handleUpdateTransaction : handleAddTransaction}
+            initialData={editingTransaction || undefined}
+            onCancel={handleCancelForm}
+          />
         </div>
       )}
 
@@ -120,6 +139,7 @@ export default function LancamentosPage() {
         <TransactionTable 
           transactions={transactions} 
           onDelete={handleDeleteTransaction}
+          onEdit={handleEditTransaction}
           isDeletingId={isDeletingId}
         />
       </div>

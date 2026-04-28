@@ -3,7 +3,7 @@
 ## Tabelas no Supabase (Database Schema)
 * `historico_analises`: id, data_analise, dados_acoes (jsonb), resumo_ia, user_id
 * `users` (Supabase Auth nativo)
-* `transactions`: id, user_id, ticker, type, quantity, unit_price, date, created_at
+* `transactions`: id, user_id, ticker, type, quantity, unit_price, other_costs, date, created_at
 * `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao
 * [NOVAS TABELAS DEVEM SER REGISTRADAS AQUI COM SEUS CAMPOS EXATOS]
 
@@ -16,11 +16,14 @@
 * [x] Scraping Fundamentus e API Yahoo Finance
 * [x] Integração Gemini IA para insights
 * [x] HU 1.1 - Autenticação Supabase (Login/Cadastro, OAuth Google, Proteção de Rotas, Middleware)
-* [x] HU 1.2 - CRUD de Lançamentos de Notas de Corretagem
+* [x] HU 1.2 - CRUD de Lançamentos de Notas de Corretagem (Criar, Editar, Excluir + campo Outros Custos)
 * [x] UX Global: Sidebar Colapsável (ícone-only ↔ ícone+texto), Header e Dropdown de Usuário
 * [x] Perfil: Configuração de Perfil, Avatar e Alteração de Senha
 * [x] Login UX: Toggle de senha, fluxo "Esqueci minha senha", mensagens de erro/sucesso
 * [x] Redefinição de Senha via Supabase `resetPasswordForEmail`
+
+## Regras de Negócio
+* **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`. Futuras features de cálculo de rentabilidade e posição consolidada devem respeitar esta regra.
 
 ## Trabalho em Progresso
 * [ ] HU 1.5 - Implementar Dashboard com Análise Quantitativa
