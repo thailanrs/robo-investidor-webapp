@@ -17,13 +17,15 @@
 * [x] Integração Gemini IA para insights
 * [x] HU 1.1 - Autenticação Supabase (Login/Cadastro, OAuth Google, Proteção de Rotas, Middleware)
 * [x] HU 1.2 - CRUD de Lançamentos de Notas de Corretagem (Criar, Editar, Excluir + campo Outros Custos)
+* [x] ROB-7 - Motor de Cálculo de Posição Atual e Preço Médio (página /carteira - "Meus Ativos")
 * [x] UX Global: Sidebar Colapsável (ícone-only ↔ ícone+texto), Header e Dropdown de Usuário
 * [x] Perfil: Configuração de Perfil, Avatar e Alteração de Senha
 * [x] Login UX: Toggle de senha, fluxo "Esqueci minha senha", mensagens de erro/sucesso
 * [x] Redefinição de Senha via Supabase `resetPasswordForEmail`
 
 ## Regras de Negócio
-* **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`. Futuras features de cálculo de rentabilidade e posição consolidada devem respeitar esta regra.
+* **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`.
+* **Preço Médio Ponderado:** Calculado apenas sobre operações de COMPRA: `PM = (Σ qtd_compra × preço_compra) / Σ qtd_compra`. Operações de VENDA reduzem a quantidade em carteira mas **NÃO** alteram o preço médio. Engine em `lib/portfolio.ts`.
 
 ## Trabalho em Progresso
 * [ ] HU 1.5 - Implementar Dashboard com Análise Quantitativa

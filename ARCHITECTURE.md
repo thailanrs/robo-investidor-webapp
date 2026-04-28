@@ -27,7 +27,7 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 
 ## Estrutura de Route Groups
 * `app/(auth)/` — Rotas públicas de autenticação: `/login`, `/auth/callback`
-* `app/(app)/` — Rotas protegidas: Dashboard (`/`), Lançamentos (`/carteira/lancamentos`), Histórico (`/historico`), Perfil (`/perfil`)
+* `app/(app)/` — Rotas protegidas: Dashboard (`/`), Meus Ativos (`/carteira`), Lançamentos (`/carteira/lancamentos`), Histórico (`/historico`), Perfil (`/perfil`)
 
 ## Layout de UI
 * **Sidebar** (`components/layout/Sidebar.tsx`): Colapsável (ícone-only ↔ ícone+texto). Estado gerenciado no `AppLayoutClient`.
