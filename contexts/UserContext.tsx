@@ -5,6 +5,7 @@ import React, { createContext, useContext } from "react";
 export interface UserProfile {
   nome_completo: string | null;
   avatar_url: string | null;
+  nivel?: string | null;
 }
 
 export interface UserContextType {

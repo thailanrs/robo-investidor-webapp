@@ -54,7 +54,6 @@ export type AnaliseAtivoResult = {
  * - DY Médio de 5 anos entre 6.0% e 25.0%.
  */
 export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult> {
-  const formattedTicker = ticker.includes('.') ? ticker : `${ticker}.SA`;
   try {
     const today = new Date();
     const fiveYearsAgo = new Date();
@@ -62,7 +61,7 @@ export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult>
 
     // 1. Busca do Histórico (Preços + Dividendos)
     // O YahooFinance.chart() é o sucessor moderno do historical() na v3 da biblioteca
-    const chart = await yahooFinance.chart(formattedTicker, { 
+    const chart = await yahooFinance.chart(ticker, {
       period1: fiveYearsAgo, 
       period2: today, 
       interval: '1d' 
@@ -103,7 +102,7 @@ export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult>
     }
 
     // 4. Extração de Múltiplos e Setor
-    const quote = await yahooFinance.quoteSummary(formattedTicker, { 
+    const quote = await yahooFinance.quoteSummary(ticker, {
       modules: ['summaryProfile', 'summaryDetail', 'defaultKeyStatistics', 'financialData'] 
     });
 
@@ -142,7 +141,7 @@ export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult>
       "DY 5A Médio (%)": Number(safeDyMedio5A.toFixed(2)),
     };
 
-  } catch (error: any) {
+  } catch (error) {
     // Retorna null silenciosamente em caso de ativos não encontrados/delistados
     return null;
   }
