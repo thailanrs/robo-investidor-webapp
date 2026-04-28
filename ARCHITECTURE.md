@@ -8,9 +8,8 @@ SaaS de gestão de patrimônio e análise quantitativa de ativos da B3 (Ações,
 * **Linguagem:** TypeScript
 * **Estilização:** Tailwind CSS (Shadcn UI / v0 para componentes base)
 * **Backend & Auth:** Supabase (PostgreSQL, Row Level Security habilitado, `@supabase/ssr`)
-* **IA Generativa:** Google Gemini (gemini-2.5-flash) via `@google/generative-ai`
-* **Scraping e Dados Financeiros:** `cheerio` (Fundamentus) e `yahoo-finance2` (Histórico/Cotações)
-* **Deploy:** Vercel
+* **Scraping e Dados Financeiros:** Supabase Edge Function com `deno_dom` (Fundamentus) e `yahoo-finance2` (Histórico/Cotações)
+* **Deploy:** Vercel (App) + Supabase Edge Functions (Scraping)
 
 ## Arquitetura de Autenticação
 A autenticação segue o padrão **Server-First** para evitar deadlocks da Web Locks API do Supabase no navegador.
@@ -30,9 +29,12 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 * `app/(app)/` — Rotas protegidas: Dashboard (`/`), Meus Ativos (`/carteira`), Lançamentos (`/carteira/lancamentos`), Histórico (`/historico`), Perfil (`/perfil`)
 
 ## Layout de UI
-* **Sidebar** (`components/layout/Sidebar.tsx`): Colapsável (ícone-only ↔ ícone+texto). Estado gerenciado no `AppLayoutClient`.
+* **Sidebar** (`components/layout/Sidebar.tsx`): Colapsável (ícone-only ↔ ícone+texto) com toggle flutuante na borda. Estado gerenciado no `AppLayoutClient`.
 * **Header** (`components/layout/Header.tsx`): Top bar com botão de menu mobile e `UserDropdown`.
 * **UserDropdown** (`components/layout/UserDropdown.tsx`): Exibe avatar/iniciais, nome, link para perfil e logout. Dados vêm do `useUser()`.
+
+## Supabase Edge Functions
+* **`fundamentus-scraper`**: Executa o scraping do site Fundamentus e aplica o ranking da Fórmula Mágica. Roda no Deno Deploy (infraestrutura separada da Vercel) para contornar bloqueios de IP do Cloudflare. Chamada pela rota `/api/fundamentus` do Next.js.
 
 ## Princípios de Desenvolvimento (Para Agentes de IA)
 1.  **Segurança:** Todas as rotas de API sensíveis devem validar a sessão do usuário via Supabase Auth. Tabelas do banco de dados utilizam RLS atrelado ao `auth.uid()`.

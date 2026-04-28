@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Loader2, Briefcase, DollarSign, Receipt } from "lucide-react";
+import { Loader2, Briefcase, DollarSign, TrendingUp } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { fetchTransactions } from "@/lib/transactions";
 import { calculatePortfolio, PortfolioPosition } from "@/lib/portfolio";
-import { PortfolioTable } from "@/components/PortfolioTable";
+import { PortfolioTable, QuoteData } from "@/components/PortfolioTable";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -13,7 +14,9 @@ const formatCurrency = (value: number) =>
 export default function CarteiraPage() {
   const user = useUser();
   const [positions, setPositions] = useState<PortfolioPosition[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [quotes, setQuotes] = useState<Record<string, QuoteData>>({});
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(true);
+  const [isLoadingQuotes, setIsLoadingQuotes] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,18 +25,44 @@ export default function CarteiraPage() {
         const transactions = await fetchTransactions(user.id);
         const portfolio = calculatePortfolio(transactions);
         setPositions(portfolio);
+        
+        // Se a carteira tem ativos, busca cotações
+        if (portfolio.length > 0) {
+          fetchQuotes(portfolio);
+        }
       } catch (err: any) {
         console.error("Erro ao carregar carteira:", err);
         setError("Erro ao carregar carteira: " + err.message);
       } finally {
-        setIsLoading(false);
+        setIsLoadingPortfolio(false);
+      }
+    }
+
+    async function fetchQuotes(currentPositions: PortfolioPosition[]) {
+      setIsLoadingQuotes(true);
+      try {
+        const tickers = currentPositions.map(p => p.ticker).join(",");
+        const res = await fetch(`/api/portfolio/quotes?tickers=${tickers}`);
+        
+        if (!res.ok) {
+          throw new Error("Falha ao buscar cotações");
+        }
+        
+        const data = await res.json();
+        setQuotes(data);
+      } catch (err) {
+        console.error("Erro ao buscar cotações:", err);
+        // Em caso de erro com a API (ex: timeout), não vamos quebrar a tela inteira,
+        // apenas exibir os valores pelo custo (tratado dentro da tabela e nos cards).
+      } finally {
+        setIsLoadingQuotes(false);
       }
     }
 
     loadPortfolio();
   }, [user.id]);
 
-  if (isLoading) {
+  if (isLoadingPortfolio) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
@@ -43,7 +72,14 @@ export default function CarteiraPage() {
 
   const totalAtivos = positions.length;
   const totalInvestido = positions.reduce((sum, p) => sum + p.balance, 0);
-  const totalCustos = positions.reduce((sum, p) => sum + p.totalOtherCosts, 0);
+  
+  // Patrimônio Atual usando cotação (ou custo se ainda não carregou a cotação)
+  const patrimonioAtual = positions.reduce((sum, p) => {
+    const currentPrice = quotes[p.ticker]?.price || p.avgPrice;
+    return sum + (p.quantity * currentPrice);
+  }, 0);
+
+  const lucroTotal = patrimonioAtual - totalInvestido;
 
   return (
     <div className="container mx-auto p-6 max-w-6xl space-y-8 mt-4">
@@ -53,7 +89,7 @@ export default function CarteiraPage() {
           Meus Ativos
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-          Posição consolidada da sua carteira com base nos lançamentos.
+          Posição consolidada da sua carteira com base nos lançamentos e cotação em tempo real.
         </p>
       </div>
 
@@ -78,29 +114,54 @@ export default function CarteiraPage() {
           </div>
         </div>
 
-        {/* Valor Investido */}
+        {/* Patrimônio Atual */}
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 flex items-start gap-4">
           <div className="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/10">
             <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Valor Total Investido</p>
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-              {formatCurrency(totalInvestido)}
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Patrimônio Atual</p>
+            {isLoadingQuotes ? (
+              <Skeleton className="h-8 w-32 mt-0.5" />
+            ) : (
+              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
+                {formatCurrency(patrimonioAtual)}
+              </p>
+            )}
+            <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+              Investido: {formatCurrency(totalInvestido)}
             </p>
           </div>
         </div>
 
-        {/* Outros Custos */}
+        {/* Lucro Total */}
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-5 flex items-start gap-4">
-          <div className="p-2.5 rounded-lg bg-amber-100 dark:bg-amber-500/10">
-            <Receipt className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <div className={`p-2.5 rounded-lg ${
+            isLoadingQuotes ? "bg-zinc-100 dark:bg-zinc-800" :
+            lucroTotal > 0 ? "bg-emerald-100 dark:bg-emerald-500/10" : 
+            lucroTotal < 0 ? "bg-red-100 dark:bg-red-500/10" : 
+            "bg-zinc-100 dark:bg-zinc-800"
+          }`}>
+            <TrendingUp className={`w-5 h-5 ${
+              isLoadingQuotes ? "text-zinc-400" :
+              lucroTotal > 0 ? "text-emerald-600 dark:text-emerald-400" : 
+              lucroTotal < 0 ? "text-red-600 dark:text-red-400" : 
+              "text-zinc-500"
+            }`} />
           </div>
           <div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Custos Operacionais</p>
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
-              {formatCurrency(totalCustos)}
-            </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Lucro Total</p>
+            {isLoadingQuotes ? (
+              <Skeleton className="h-8 w-32 mt-0.5" />
+            ) : (
+              <p className={`text-2xl font-bold mt-0.5 ${
+                lucroTotal > 0 ? "text-emerald-600 dark:text-emerald-500" : 
+                lucroTotal < 0 ? "text-red-600 dark:text-red-500" : 
+                "text-zinc-900 dark:text-zinc-50"
+              }`}>
+                {lucroTotal > 0 ? "+" : ""}{formatCurrency(lucroTotal)}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -108,9 +169,13 @@ export default function CarteiraPage() {
       {/* Portfolio Table */}
       <div>
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-          Posição Consolidada
+          Análise de Rentabilidade
         </h2>
-        <PortfolioTable positions={positions} />
+        <PortfolioTable 
+          positions={positions} 
+          quotes={quotes} 
+          isLoadingQuotes={isLoadingQuotes} 
+        />
       </div>
     </div>
   );

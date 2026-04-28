@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Home, Briefcase, Wallet, History, Settings, X, PanelLeftClose, PanelLeftOpen, BarChart3 } from "lucide-react";
+import { Bot, Home, Briefcase, Wallet, History, Settings, X, PanelLeftClose, PanelLeftOpen, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -36,23 +36,44 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
 
       {/* Sidebar container */}
       <aside 
-        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out md:translate-x-0 md:static ${
+        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out md:translate-x-0 md:static group ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "md:w-16" : "md:w-64"} w-64`}
       >
+        {/* Border Hit Area & Floating Toggle Button */}
+        <div 
+          onClick={() => setCollapsed(!collapsed)}
+          className="hidden md:block absolute top-0 -right-2 h-full w-4 z-[60] cursor-pointer group/border"
+          title={collapsed ? "Expandir menu" : "Recolher menu"}
+        >
+          <div className={`absolute top-1/3 -translate-y-1/2 left-0.5 h-6 w-6 flex items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-all duration-300 hover:scale-110 hover:text-emerald-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:text-emerald-400 
+            opacity-0 group-hover:opacity-100 group-hover/border:opacity-100`}>
+            {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+          </div>
+          
+          {/* Visual feedback line on border hover */}
+          <div className="absolute top-0 left-2 h-full w-0.5 bg-emerald-500/0 group-hover/border:bg-emerald-500/20 transition-colors" />
+        </div>
+
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`h-16 flex items-center border-b border-zinc-200 dark:border-zinc-800 ${collapsed ? "md:justify-center md:px-0 px-6" : "px-6"}`}>
-            <Link href="/" className={`flex items-center gap-3 ${collapsed ? "md:justify-center" : ""}`}>
-              <div className="bg-emerald-600 p-1.5 rounded-lg flex-shrink-0">
-                <Bot className="w-6 h-6 text-white" />
-              </div>
-              <span className={`font-bold text-lg tracking-tight truncate transition-opacity duration-200 ${collapsed ? "md:hidden" : ""}`}>
-                Robô Investidor
-              </span>
-            </Link>
+          <div className="h-16 flex items-center border-b border-zinc-200 dark:border-zinc-800 px-4">
+            <div className={`flex items-center gap-3 flex-1 overflow-hidden ${collapsed ? "justify-center" : ""}`}>
+              <Link href="/" className="flex items-center gap-3 shrink-0">
+                <div className="bg-emerald-600 p-1.5 rounded-lg flex-shrink-0">
+                  <Bot className="w-6 h-6 text-white" />
+                </div>
+                {!collapsed && (
+                  <span className="font-bold text-lg tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+                    Robô Investidor
+                  </span>
+                )}
+              </Link>
+            </div>
+            
+            {/* Mobile Close Button */}
             <button 
-              className="ml-auto md:hidden text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              className="md:hidden text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               onClick={() => setIsOpen(false)}
             >
               <X className="w-5 h-5" />
@@ -60,7 +81,7 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
           </div>
 
           {/* Navigation */}
-          <nav className={`flex-1 py-6 space-y-1 overflow-y-auto ${collapsed ? "md:px-2 px-4" : "px-4"}`}>
+          <nav className={`flex-1 py-6 space-y-1 overflow-y-auto overflow-x-hidden ${collapsed ? "md:px-2 px-4" : "px-4"}`}>
             {links.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -93,26 +114,10 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
             })}
           </nav>
 
-          {/* Footer with collapse toggle */}
-          <div className="border-t border-zinc-200 dark:border-zinc-800">
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={`hidden md:flex items-center gap-3 w-full py-3 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors ${
-                collapsed ? "justify-center px-0" : "px-6"
-              }`}
-              title={collapsed ? "Expandir menu" : "Recolher menu"}
-            >
-              {collapsed ? (
-                <PanelLeftOpen className="w-5 h-5 shrink-0" />
-              ) : (
-                <>
-                  <PanelLeftClose className="w-5 h-5 shrink-0" />
-                  <span className="text-xs">Recolher</span>
-                </>
-              )}
-            </button>
-            <div className={`py-2 text-xs text-center text-zinc-400 dark:text-zinc-600 ${collapsed ? "md:px-1" : "px-4"}`}>
-              {collapsed ? "v3" : "v3.0.0"}
+          {/* Footer */}
+          <div className="border-t border-zinc-200 dark:border-zinc-800 py-3">
+            <div className={`text-[10px] uppercase tracking-widest font-semibold text-center text-zinc-400 dark:text-zinc-600 ${collapsed ? "md:px-1" : "px-4"}`}>
+              {collapsed ? "v3" : "Robô Investidor v3.0.0"}
             </div>
           </div>
         </div>
