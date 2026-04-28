@@ -55,65 +55,72 @@ function rankMagicFormula(stocks: StockData[], valueIndicator: 'evEbit' | 'pl') 
 }
 
 export async function fetchFundamentusData(): Promise<string[]> {
-  const response = await fetch('http://fundamentus.com.br/resultado.php', {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    },
-    next: {
-      revalidate: 86400 // Cache de 24 horas no Next.js
-    }
-  });
+  try {
+    const response = await fetch('http://fundamentus.com.br/resultado.php', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      },
+      next: {
+        revalidate: 86400 // Cache de 24 horas no Next.js
+      }
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Fundamentus: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Fundamentus: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    
+    const stocks: StockData[] = [];
+
+    // Parseando a tabela do Fundamentus
+    $('#resultado tbody tr').each((_, el) => {
+      const tds = $(el).find('td');
+      if (tds.length >= 20) {
+        const ticker = $(tds[0]).text().trim();
+        const pl = parseBrNumber($(tds[2]).text());
+        const evEbit = parseBrNumber($(tds[10]).text());
+        const mrgLiq = parseBrNumber($(tds[13]).text());
+        const roe = parseBrNumber($(tds[16]).text());
+        const liq2Meses = parseBrNumber($(tds[17]).text());
+
+        stocks.push({ ticker, pl, evEbit, mrgLiq, roe, liq2Meses });
+      }
+    });
+
+    // 1. Filtros de Qualidade Básicos
+    const filteredStocks = stocks.filter(s => 
+      s.liq2Meses > 1000000 &&
+      s.roe > 10 &&
+      s.mrgLiq > 5
+    );
+
+    // 2. Separação: Financeiras x Reais
+    const isFinancial = (ticker: string) => FINANCIAL_RADICALS.some(radical => ticker.startsWith(radical));
+    
+    const reais = filteredStocks.filter(s => !isFinancial(s.ticker));
+    const financeiras = filteredStocks.filter(s => isFinancial(s.ticker));
+
+    // 3. Aplicação do Ranking da Fórmula Mágica
+    // Reais: Melhor EV/EBIT e Melhor ROE
+    const rankedReais = rankMagicFormula(reais, 'evEbit');
+    
+    // Financeiras: Melhor P/L e Melhor ROE
+    const rankedFinanceiras = rankMagicFormula(financeiras, 'pl');
+
+    // 4. Seleção do Top X (Reais e Financeiras)
+    const result = [
+      ...rankedReais.slice(0, 60),
+      ...rankedFinanceiras.slice(0, 30)
+    ].map(s => s.ticker);
+
+    return result;
+  } catch (error: any) {
+    console.error('Error in fetchFundamentusData:', error.message);
+    throw error;
   }
-
-  const html = await response.text();
-  const $ = cheerio.load(html);
-  
-  const stocks: StockData[] = [];
-
-  // Parseando a tabela do Fundamentus
-  $('#resultado tbody tr').each((_, el) => {
-    const tds = $(el).find('td');
-    if (tds.length >= 20) {
-      const ticker = $(tds[0]).text().trim();
-      const pl = parseBrNumber($(tds[2]).text());
-      const evEbit = parseBrNumber($(tds[10]).text());
-      const mrgLiq = parseBrNumber($(tds[13]).text());
-      const roe = parseBrNumber($(tds[16]).text());
-      const liq2Meses = parseBrNumber($(tds[17]).text());
-
-      stocks.push({ ticker, pl, evEbit, mrgLiq, roe, liq2Meses });
-    }
-  });
-
-  // 1. Filtros de Qualidade Básicos
-  const filteredStocks = stocks.filter(s => 
-    s.liq2Meses > 1000000 &&
-    s.roe > 10 &&
-    s.mrgLiq > 5
-  );
-
-  // 2. Separação: Financeiras x Reais
-  const isFinancial = (ticker: string) => FINANCIAL_RADICALS.some(radical => ticker.startsWith(radical));
-  
-  const reais = filteredStocks.filter(s => !isFinancial(s.ticker));
-  const financeiras = filteredStocks.filter(s => isFinancial(s.ticker));
-
-  // 3. Aplicação do Ranking da Fórmula Mágica
-  // Reais: Melhor EV/EBIT e Melhor ROE
-  const rankedReais = rankMagicFormula(reais, 'evEbit');
-  
-  // Financeiras: Melhor P/L e Melhor ROE
-  const rankedFinanceiras = rankMagicFormula(financeiras, 'pl');
-
-  // 4. Seleção do Top X (Reais e Financeiras)
-  return [
-    ...rankedReais.slice(0, 60),
-    ...rankedFinanceiras.slice(0, 30)
-  ].map(s => s.ticker);
 }
 
 export async function GET() {
