@@ -4,43 +4,50 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { User, LogOut, Loader2 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
+import { usePathname } from "next/navigation";
 
 export function UserDropdown() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadUser() {
-      const supabase = createClient();
-      let authResult = await supabase.auth.getUser();
-      
-      if (authResult.error?.message?.includes('stole it')) {
-        await new Promise(r => setTimeout(r, 500));
-        authResult = await supabase.auth.getUser();
-      }
-      
-      const { data: { user } } = authResult;
-      if (user) {
-        setUser(user);
-        
-        // Fetch profile
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("nome_completo, avatar_url")
-          .eq("id", user.id)
-          .single();
-          
-        if (profileData) {
-          setProfile(profileData);
-        }
-      }
-      setIsLoading(false);
+  async function loadUser() {
+    const supabase = createClient();
+    let authResult = await supabase.auth.getUser();
+    
+    if (authResult.error?.message?.includes('stole it')) {
+      await new Promise(r => setTimeout(r, 500));
+      authResult = await supabase.auth.getUser();
     }
     
-    loadUser();
+    const { data: { user } } = authResult;
+    if (user) {
+      setUser(user);
+      
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("nome_completo, avatar_url")
+        .eq("id", user.id)
+        .single();
+        
+      if (profileData) {
+        setProfile(profileData);
+      }
+    } else {
+      setUser(null);
+      setProfile(null);
+    }
+    setIsLoading(false);
+  }
 
+  useEffect(() => {
+    loadUser();
+  }, [pathname]);
+
+  useEffect(() => {
     // Setup auth listener
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {

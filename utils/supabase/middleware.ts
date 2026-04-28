@@ -33,22 +33,19 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/auth/callback');
-  const isPublicApiRoute = pathname.startsWith('/api'); // Assume APIs might have their own protection, or exclude them from redirect loops. For this, we'll let APIs handle their own auth except if needed.
+  const isApiRoute = pathname.startsWith('/api');
 
-  // Protect all non-auth and non-api routes by default if we want a fully private app.
-  // The ticket specifically mentions /, /historico and /carteira
-  const isProtectedRoute = pathname === '/' || pathname.startsWith('/historico') || pathname.startsWith('/carteira');
-
-  if (!user && isProtectedRoute) {
+  // Se não tem usuário e NÃO está numa rota pública (login/callback/api), redireciona para login
+  if (!user && !isAuthRoute && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Redirect logged-in users away from the login page
+  // Redireciona usuários logados para fora da tela de login
   if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/carteira/lancamentos'
     return NextResponse.redirect(url)
   }
 
