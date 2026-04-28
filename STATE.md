@@ -13,8 +13,8 @@
 * **Middleware:** `proxy.ts` + `utils/supabase/middleware.ts` protegem todas as rotas por padrão. Apenas `/login`, `/auth/callback` e `/api/*` são públicas.
 
 ## Funcionalidades Concluídas
-* [x] Scraping Fundamentus e API Yahoo Finance
-* [x] Integração Gemini IA para insights
+* [x] Scraping Fundamentus via Supabase Edge Function (contorna bloqueio Cloudflare em produção)
+* [x] Integração Yahoo Finance (yahoo-finance2) com sufixo .SA para ativos B3
 * [x] HU 1.1 - Autenticação Supabase (Login/Cadastro, OAuth Google, Proteção de Rotas, Middleware)
 * [x] HU 1.2 - CRUD de Lançamentos de Notas de Corretagem (Criar, Editar, Excluir + campo Outros Custos)
 * [x] ROB-7 - Motor de Cálculo de Posição Atual e Preço Médio (página /carteira - "Meus Ativos")
