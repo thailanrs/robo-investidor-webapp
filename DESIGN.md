@@ -76,6 +76,9 @@ design-tokens:
       md: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
       xl: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
       brand: "0 10px 15px -3px rgba(99, 102, 241, 0.2)"
+      neon-emerald: "0 0 12px rgba(16, 185, 129, 0.35)"
+      neon-cyan: "0 0 12px rgba(6, 182, 212, 0.35)"
+      neon-indigo: "0 0 12px rgba(99, 102, 241, 0.35)"
   motion:
     duration:
       fast: 150ms
@@ -83,7 +86,7 @@ design-tokens:
       slow: 700ms
     easing:
       standard: cubic-bezier(0.4, 0, 0.2, 1)
-      standard: ease-in-out
+      ease-in-out: ease-in-out
 ---
 
 # Design System: Robô Investidor
@@ -92,53 +95,195 @@ Este documento descreve a identidade visual e as decisões de design do **Robô 
 
 ## Visão Geral Estética
 
-A estética do Robô Investidor é definida como **"Premium Financial Dashboard"**. Ela utiliza uma base de cores neutras profundas (Zinc) para focar a atenção do usuário nos dados e nos insights gerados por IA, que são destacados com gradientes vibrantes e cores de destaque.
+A estética do Robô Investidor é definida como **"Cyber-Financial Premium"**. Ela combina uma base profunda em Dark Mode (Zinc-950/900) com elementos de **glassmorphism**, gradientes neon e tipografia de alto impacto. O objetivo é que o sistema pareça um produto de nível institucional — algo que um trader profissional usaria — mas com a fluidez e leveza de uma fintech moderna.
 
-### 1. Paleta de Cores e Hierarquia
+A referência visual de nível premium é: painéis de trading de alto desempenho como Bloomberg Terminal, mas com a modernidade de interfaces como Linear, Vercel e plataformas SaaS de nova geração.
 
-O sistema opera principalmente em **Modo Escuro (Dark Mode)**, utilizando a escala OKLCH para garantir percepção de brilho uniforme e cores vibrantes.
+---
 
-*   **Emerald (Sucesso/Estrutura):** Utilizado para o logotipo, indicadores de rentabilidade positiva e estados ativos de navegação. Representa crescimento e estabilidade.
-*   **Indigo (Ação/Foco):** A cor de destaque para chamadas para ação (CTAs) e identificação de ativos (tickers). É uma cor "séria" mas moderna.
-*   **Cyan (Tecnologia/IA):** Utilizada em conjunto com o Indigo em gradientes para sinalizar recursos inteligentes e processamento de dados.
+## 1. Paleta de Cores e Hierarquia
 
-### 2. Tipografia
+O sistema opera exclusivamente em **Modo Escuro (Dark Mode)**, usando a escala OKLCH para garantir percepção de brilho uniforme.
 
-Utilizamos a família de fontes **Geist**, desenvolvida pela Vercel. 
-*   **Geist Sans:** Proporciona uma legibilidade excepcional para dados numéricos e tabelas complexas, mantendo um ar tecnológico.
-*   **Geist Mono:** Utilizada pontualmente para valores técnicos que requerem alinhamento tabular perfeito.
+- **Emerald (Sucesso/Crescimento):** Rentabilidade positiva, indicadores ativos, logotipo, linhas de gráficos "Minha Carteira".
+- **Indigo (Ação/Foco):** CTAs primários, tickers de ativos, linha de gráfico "Carteira Ideal".
+- **Cyan (Tecnologia/IA):** Gradientes de IA, badge de nível do usuário, glow de elementos tech. Linha de gráfico CDI.
+- **Vermelho/Rose:** Rentabilidade negativa, alertas críticos.
+- **Zinc (Neutros):** Toda a infraestrutura visual — backgrounds, superfícies, bordas.
 
-As manchetes utilizam um peso `extrabold` com `tracking-tight` para um visual impactante e profissional.
+### Gradientes Chave
+```
+-- Badge Premium: linear-gradient(135deg, #06b6d4, #10b981)  (Cyan → Emerald)
+-- IA/Tech elements: linear-gradient(135deg, #6366f1, #06b6d4) (Indigo → Cyan)
+-- Linha Carteira Ideal (gráfico): stroke com indigo-500 + glow indigo
+-- Linha CDI (gráfico): stroke com cyan-400 + glow cyan
+-- Linha Minha Carteira (gráfico): stroke com emerald-500 + glow emerald
+```
 
-### 3. Superfícies e Profundidade
+---
 
-O design utiliza uma abordagem de camadas sutis:
-*   **Background (Zinc-950):** A base infinita.
-*   **Cards (Zinc-900):** Superfícies que agrupam informações relacionadas, com bordas finas (Zinc-800) e sombras suaves.
-*   **Glassmorphism Lite:** Em placeholders e cards de IA, utilizamos fundos levemente translúcidos com `backdrop-blur` para criar uma sensação de profundidade e sofisticação.
+## 2. Tipografia
 
-### 4. Movimento e Interatividade
+Família exclusiva: **Geist** (Vercel). Nunca misturar com outras fontes.
 
-O movimento é usado para guiar o olhar e confirmar ações:
-*   **Transições Suaves:** Colapsar/Expandir a barra lateral utiliza uma duração de 300ms com `ease-in-out` para uma sensação mecânica porém fluida.
-*   **Micro-interações:** Botões e itens de navegação possuem estados de hover com mudanças sutis de escala (`active:scale-95`) e cor, proporcionando feedback tátil imediato.
-*   **Animações de Entrada:** Cards e tabelas utilizam `animate-in fade-in slide-in-from-bottom` para suavizar o carregamento de dados e dar uma sensação de "montagem" da interface.
+| Elemento | Fonte | Peso | Modificadores |
+|---|---|---|---|
+| Títulos de página | Geist Sans | `extrabold` (800) | `tracking-tight` |
+| Subtítulos de seção | Geist Sans | `semibold` (600) | — |
+| Labels e metadados técnicos | Geist Mono | `medium` (500) | `tracking-wider`, `uppercase` |
+| Valores numéricos críticos (patrimônio, %) | Geist Sans | `bold` (700) | `tabular-nums`, `font-variant-numeric: tabular-nums` |
+| Corpo e descrições | Geist Sans | `normal` (400) | `text-zinc-400` |
+| Badge de nível ("PREMIUM ELITE") | Geist Sans | `semibold` (600) | `uppercase`, `tracking-widest`, tamanho `xs` |
 
-### 5. Iconografia
+> ⚠️ **Regra de ouro:** Valores financeiros (preços, percentuais, quantidades) DEVEM usar `tabular-nums` para evitar "dança" de números em atualizações em tempo real.
 
-Utilizamos a biblioteca **Lucide React**. Os ícones são desenhados com espessura fina (stroke width 2) e são usados principalmente para reforçar a semântica visual das seções (ex: Foguete para Análise, Carteira para Ativos, Bot para IA).
+---
 
-## Refinamento Premium (Vibe: Cyber-Financial)
+## 3. Superfícies, Profundidade e Glassmorphism
 
-### 1. Efeitos de Brilho (Glow)
-- Gráficos e indicadores de sucesso devem usar `drop-shadow`. Ex: `drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]` para elementos Emerald.
-- Cards devem ter um gradiente de borda sutil ou um reflexo superior para simular vidro.
+### Hierarquia de Camadas
+```
+Zinc-950  → Background global (página)
+Zinc-900  → Cards padrão
+Zinc-800  → Cards aninhados, dropdowns, tooltips
+Zinc-700  → Borders ativas, separadores
+```
 
-### 2. Tipografia & Hierarquia
-- Títulos: Geist Sans Extrabold com tracking-tighter.
-- Subtítulos e Labels: Geist Mono Medium para um ar técnico/preciso.
-- Status do Usuário: Usar fonte Gold/Cyan para "Premium Elite" para criar senso de exclusividade.
+### Glassmorphism (Obrigatório em novos componentes de Input, Header e Modais)
+O glassmorphism é o padrão visual para **todos os elementos interativos e de entrada** do sistema. Ele cria profundidade e sofisticação sem pesar a interface.
 
-### 3. Componentes de Input & Header
-- Barra de Pesquisa: Fundo `zinc-900/50`, `backdrop-blur-md`, bordas `zinc-800`.
-- Ícones de Ação: (Sino, Engrenagem) devem ter um hover suave com fundo circular translúcido.
+**Receita padrão:**
+```css
+background: rgba(24, 24, 27, 0.6);   /* zinc-900 com 60% opacidade */
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px);
+border: 1px solid rgba(255, 255, 255, 0.08);
+border-radius: 0.75rem;
+```
+
+**Aplicação em Tailwind:**
+```
+bg-zinc-900/60 backdrop-blur-md border border-white/8 rounded-xl
+```
+
+### Componentes que DEVEM usar Glassmorphism
+- `<SearchBar />` (barra de pesquisa do header)
+- `<Select />` e `<Input />` em todo o sistema
+- Modais e Dialogs
+- Dropdowns de usuário
+- Tooltips de gráficos
+- Cards de destaque no Dashboard
+
+---
+
+## 4. Header Redesign — Especificação Completa
+
+O Header é a identidade visual mais imediata do produto. Deve transmitir **poder e controle** ao usuário.
+
+### Layout do Header
+```
+[Logo/Sidebar Toggle] ---- [SearchBar Centralizada] ---- [Sino | Engrenagem | UserBadge]
+```
+
+### Barra de Pesquisa
+- **Posição:** Centralizada no header, largura máxima de `max-w-md`.
+- **Estilo:** Glassmorphism (bg-zinc-900/60 backdrop-blur-md), ícone de lupa à esquerda, atalho `⌘K` exibido à direita como badge `kbd`.
+- **Placeholder:** `"Buscar ativos, relatórios ou robôs..."`
+- **Comportamento:** Ao focar (`focus`), a borda acende com `ring-1 ring-emerald-500/50` e um leve glow.
+- **Atalho:** Ao pressionar `Cmd+K` ou `Ctrl+K`, o input recebe foco automaticamente.
+
+### Ícones de Ação (Notificação e Configurações)
+- **Componentes:** `<Bell />` e `<Settings />` do Lucide React.
+- **Tamanho:** `h-5 w-5`, cor `text-zinc-400`.
+- **Hover:** fundo circular `hover:bg-white/5 rounded-full p-2`, ícone muda para `text-zinc-100`.
+- **Badge de notificação:** Um ponto emerald `bg-emerald-500` de 6px posicionado em `top-0 right-0` do sino quando há notificações pendentes.
+- **Transição:** `transition-all duration-150`.
+
+### Badge de Nível do Usuário (UserBadge)
+Este é o elemento de maior impacto premium do header. Inspira-se em sistemas de gamificação de plataformas financeiras profissionais.
+
+**Estrutura do componente `<UserBadge />`:**
+```
+[Avatar circular] [nome_completo (bold)] [badge PREMIUM ELITE]
+```
+
+- **Avatar:** `h-8 w-8`, circular, com borda `ring-1 ring-emerald-500/40`.
+- **Nome:** `text-sm font-semibold text-zinc-100`.
+- **Badge:** Texto `PREMIUM ELITE`, fundo com gradiente `from-cyan-500 to-emerald-500`, texto branco, `text-xs font-semibold tracking-widest uppercase`, border-radius `rounded-full`, padding `px-2 py-0.5`.
+- **Localização no banco:** O campo `nivel` deve ser adicionado na tabela `profiles` (VARCHAR, default: `'PREMIUM ELITE'`). Futuramente pode evoluir para um sistema de níveis (STARTER → PRO → PREMIUM ELITE → INSTITUTIONAL).
+- **Dados:** Virão do `useUser()` (Context), nunca chamando Supabase diretamente no client.
+
+---
+
+## 5. Componentes de Input & Select — Padrão Glassmorphism
+
+Todos os `<Input />`, `<Select />`, `<Textarea />` e `<Combobox />` do sistema devem adotar o seguinte padrão visual.
+
+### Padrão de Select
+```
+bg-zinc-900/60 backdrop-blur-md
+border border-white/8
+rounded-xl
+text-zinc-100 placeholder:text-zinc-500
+focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/30
+transition-all duration-150
+```
+
+### Estados
+- **Default:** borda `border-white/8`
+- **Hover:** borda `border-white/15`
+- **Focus:** ring emerald sutil + borda levemente mais brilhante
+- **Error:** borda `border-red-500/50` + texto auxiliar `text-red-400`
+- **Disabled:** `opacity-50 cursor-not-allowed`
+
+---
+
+## 6. Gráficos — Especificação Visual
+
+Todos os gráficos usam **Recharts** com o tema Dark Mode Neon. Nenhum gráfico deve ter fundo branco ou cores pastéis.
+
+### Paleta de Séries Temporais (Comparativo de Performance)
+| Série | Cor | Efeito |
+|---|---|---|
+| Minha Carteira | `emerald-500` (#10b981) | `drop-shadow: 0 0 8px rgba(16,185,129,0.4)` |
+| Carteira Ideal | `indigo-400` (#818cf8) | `drop-shadow: 0 0 8px rgba(129,140,248,0.4)` |
+| CDI | `cyan-400` (#22d3ee) | `drop-shadow: 0 0 8px rgba(34,211,238,0.4)` |
+
+### Padrão de Área (AreaChart)
+- Usar `<AreaChart>` com `<defs>` para gradientes verticais.
+- Cada série: `fillOpacity` de `0.15` na base, `0.4` no topo.
+- Grid: `stroke="rgba(255,255,255,0.05)"`, sem bordas externas.
+- Tooltip: glassmorphism (`bg-zinc-900/90 backdrop-blur-sm border border-white/10`), valores formatados em BRL.
+- Eixo X: datas formatadas (`Geist Mono`, `text-zinc-500`, `text-xs`).
+- Eixo Y: valores em K/M para compactar (ex: `R$ 25K`, `R$ 1,2M`).
+
+### Filtros de Período
+Os botões de filtro de tempo (1A, 2A, 5A, Máx) devem ter o estilo de **Tab Pills**:
+- Inativo: `bg-transparent text-zinc-500 hover:text-zinc-300`
+- Ativo: `bg-zinc-800 text-zinc-100 rounded-lg`
+- Container: `bg-zinc-900/60 backdrop-blur-sm rounded-xl p-1`
+
+---
+
+## 7. Movimento e Interatividade
+
+- **Transições Suaves:** Colapsar/Expandir sidebar usa 300ms `ease-in-out`.
+- **Micro-interações:** Botões e nav items com `active:scale-95` e cor de hover.
+- **Animações de Entrada:** Cards e tabelas com `animate-in fade-in slide-in-from-bottom-4 duration-300`.
+- **Glow on Hover:** Elementos com cores neon (badges, CTAs) ganham um `box-shadow` de glow ao hover.
+
+---
+
+## 8. Iconografia
+
+Biblioteca exclusiva: **Lucide React**. Stroke width padrão: `2`. Nunca usar ícones filled.
+
+- Dashboard → `LayoutDashboard`
+- Carteira → `Briefcase`
+- Lançamentos → `Receipt`
+- Proventos → `Coins`
+- Histórico → `History`
+- Configurações → `Settings`
+- Notificações → `Bell`
+- IA/Análise → `BrainCircuit`
+- Busca → `Search`
