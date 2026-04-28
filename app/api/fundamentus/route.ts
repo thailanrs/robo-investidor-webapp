@@ -56,17 +56,29 @@ function rankMagicFormula(stocks: StockData[], valueIndicator: 'evEbit' | 'pl') 
 
 export async function fetchFundamentusData(): Promise<string[]> {
   try {
-    const response = await fetch('https://www.fundamentus.com.br/resultado.php', {
+    // 1. Primeiro busca a home para obter um cookie de sessão (PHPSESSID)
+    const homeResponse = await fetch('https://www.fundamentus.com.br/index.php', {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': 'https://www.fundamentus.com.br/',
-        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       },
-      next: {
-        revalidate: 86400 // Cache de 24 horas no Next.js
-      }
+      cache: 'no-store'
+    });
+    
+    const setCookie = homeResponse.headers.get('set-cookie');
+    const sessionId = setCookie ? setCookie.split(';')[0] : '';
+
+    // 2. Agora busca os resultados enviando o cookie de sessão
+    const response = await fetch('https://www.fundamentus.com.br/resultado.php', {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://www.fundamentus.com.br/index.php',
+        'Cookie': sessionId,
+        'Connection': 'keep-alive',
+      },
+      cache: 'no-store'
     });
 
     if (!response.ok) {

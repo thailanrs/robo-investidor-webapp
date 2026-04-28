@@ -78,17 +78,21 @@ export async function GET() {
     finalistasAgrupadas.sort((a, b) => (a.notaTotal || 0) - (b.notaTotal || 0));
     const finalistas = finalistasAgrupadas.slice(0, 15);
 
-    // 8. Salvar no Histórico do Supabase
-    try {
-      const { error: dbError } = await supabase.from('historico_analises').insert([
-        { dados_acoes: finalistas, resumo_ia: "" }
-      ]);
-      
-      if (dbError) {
-        console.error("Erro ao salvar no Supabase:", dbError);
+    // 8. Salvar no Histórico do Supabase (Apenas se houver resultados)
+    if (finalistas.length > 0) {
+      try {
+        const { error: dbError } = await supabase.from('historico_analises').insert([
+          { dados_acoes: finalistas, resumo_ia: "" }
+        ]);
+        
+        if (dbError) {
+          console.error("Erro ao salvar no Supabase:", dbError);
+        }
+      } catch(e) {
+        console.error("Erro inesperado ao salvar no Supabase:", e);
       }
-    } catch(e) {
-      console.error("Erro inesperado ao salvar no Supabase:", e);
+    } else {
+      console.warn("Análise concluída sem resultados. Histórico não será salvo.");
     }
 
     return NextResponse.json({
