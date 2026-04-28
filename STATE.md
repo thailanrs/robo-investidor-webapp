@@ -1,10 +1,11 @@
 # Estado Atual do Projeto (State of Project)
 
 ## Tabelas no Supabase (Database Schema)
+* `ideal_portfolio_snapshots`: id, snapshot_date, tickers (jsonb), created_at
 * `historico_analises`: id, data_analise, dados_acoes (jsonb), resumo_ia, user_id
 * `users` (Supabase Auth nativo)
 * `transactions`: id, user_id, ticker, type, quantity, unit_price, other_costs, date, created_at
-* `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao
+* `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao, nivel
 * [NOVAS TABELAS DEVEM SER REGISTRADAS AQUI COM SEUS CAMPOS EXATOS]
 
 ## Arquitetura de Autenticação
@@ -13,12 +14,11 @@
 * **Middleware:** `proxy.ts` + `utils/supabase/middleware.ts` protegem todas as rotas por padrão. Apenas `/login`, `/auth/callback` e `/api/*` são públicas.
 
 ## Funcionalidades Concluídas
-* [x] Scraping Fundamentus via Supabase Edge Function (contorna bloqueio Cloudflare em produção)
-* [x] Integração Yahoo Finance (yahoo-finance2) com sufixo .SA para ativos B3
+* [x] Scraping Fundamentus e API Yahoo Finance
+* [x] Integração Gemini IA para insights
 * [x] HU 1.1 - Autenticação Supabase (Login/Cadastro, OAuth Google, Proteção de Rotas, Middleware)
 * [x] HU 1.2 - CRUD de Lançamentos de Notas de Corretagem (Criar, Editar, Excluir + campo Outros Custos)
 * [x] ROB-7 - Motor de Cálculo de Posição Atual e Preço Médio (página /carteira - "Meus Ativos")
-* [x] ROB-11 - Integrar Cotações em Tempo Real e Cálculo de Rentabilidade Atual
 * [x] UX Global: Sidebar Colapsável (ícone-only ↔ ícone+texto), Header e Dropdown de Usuário
 * [x] Perfil: Configuração de Perfil, Avatar e Alteração de Senha
 * [x] Login UX: Toggle de senha, fluxo "Esqueci minha senha", mensagens de erro/sucesso
@@ -30,4 +30,6 @@
 
 ## Trabalho em Progresso
 * [x] HU 1.5 - Implementar Dashboard com Análise Quantitativa
-* [x] [Dashboard] Gráficos de Composição de Carteira e Evolução
+* [x] [Dashboard] Gráficos de Composição de Carteira e Evolução* [x] ROB-12 - Performance Comparativa (ideal_portfolio_snapshots, API, Gráfico Recharts)
+* [x] ROB-12 - Redesign Premium do Header (Search, Icons, User Badge)
+* [x] ROB-12 - Componentes Globais UI (Input e Select em Glassmorphism)

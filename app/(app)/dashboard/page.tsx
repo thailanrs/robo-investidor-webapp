@@ -8,6 +8,7 @@ import { calculatePortfolio, PortfolioPosition } from "@/lib/portfolio";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { EvolutionChart } from "@/components/dashboard/EvolutionChart";
 import { PortfolioPieChart } from "@/components/dashboard/PortfolioPieChart";
+import { PerformanceComparisonChart } from "@/components/dashboard/PerformanceComparisonChart";
 
 export default function DashboardPage() {
   const user = useUser();
@@ -89,7 +90,12 @@ export default function DashboardPage() {
         rentabilidadePercent={rentabilidadePercent}
       />
 
-      {/* Charts Section */}
+      {/* Performance Comparison Chart (Full Width) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <PerformanceComparisonChart />
+      </div>
+
+      {/* Evolution and Pie Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <EvolutionChart />
         <PortfolioPieChart positions={positions} />

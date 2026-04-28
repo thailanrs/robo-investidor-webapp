@@ -2,29 +2,16 @@
 
 import React from "react";
 import { PortfolioPosition } from "@/lib/portfolio";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingUp } from "lucide-react";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-const formatPercent = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "percent", minimumFractionDigits: 2 }).format(value);
-
-export type QuoteData = {
-  price: number;
-  currency: string;
-  change: number;
-  changePercent: number;
-};
-
 interface PortfolioTableProps {
   positions: PortfolioPosition[];
-  quotes: Record<string, QuoteData>;
-  isLoadingQuotes: boolean;
 }
 
-export function PortfolioTable({ positions, quotes, isLoadingQuotes }: PortfolioTableProps) {
+export function PortfolioTable({ positions }: PortfolioTableProps) {
   if (positions.length === 0) {
     return (
       <div className="p-12 text-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
@@ -37,15 +24,7 @@ export function PortfolioTable({ positions, quotes, isLoadingQuotes }: Portfolio
     );
   }
 
-  // Se estivermos carregando as cotações, mas já temos posições (evita piscar, usa skeleton)
-  // Calcula o total do portfólio usando a cotação atual, ou faz fallback pro custo se não tiver cotação.
-  const totalPortfolioValue = positions.reduce((sum, p) => {
-    const currentPrice = quotes[p.ticker]?.price || p.avgPrice;
-    return sum + (p.quantity * currentPrice);
-  }, 0);
-
-  const totalInvested = positions.reduce((sum, p) => sum + p.balance, 0); // p.balance is qty * avgPrice
-  const totalProfit = totalPortfolioValue - totalInvested;
+  const totalPortfolio = positions.reduce((sum, p) => sum + p.balance, 0);
 
   return (
     <div className="w-full overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
@@ -55,23 +34,16 @@ export function PortfolioTable({ positions, quotes, isLoadingQuotes }: Portfolio
             <th className="px-5 py-4 font-medium">Ativo</th>
             <th className="px-5 py-4 font-medium text-right">Quant.</th>
             <th className="px-5 py-4 font-medium text-right">Preço Médio</th>
-            <th className="px-5 py-4 font-medium text-right">Cotação Atual</th>
-            <th className="px-5 py-4 font-medium text-right">Saldo Atual</th>
-            <th className="px-5 py-4 font-medium text-right">Variação (R$)</th>
-            <th className="px-5 py-4 font-medium text-right">Rentabilidade</th>
+            <th className="px-5 py-4 font-medium text-right">Saldo</th>
+            <th className="px-5 py-4 font-medium text-right">Custos Acum.</th>
+            <th className="px-5 py-4 font-medium text-right">% Carteira</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {positions.map((pos) => {
-            const quote = quotes[pos.ticker];
-            const currentPrice = quote?.price || 0;
-            const currentBalance = pos.quantity * currentPrice;
-            const variation = currentBalance - pos.balance;
-            const profitability = pos.avgPrice > 0 ? (currentPrice / pos.avgPrice) - 1 : 0;
-
-            const isPositive = variation > 0;
-            const isNegative = variation < 0;
-            const isZero = variation === 0;
+            const pctCarteira = totalPortfolio > 0
+              ? ((pos.balance / totalPortfolio) * 100).toFixed(1)
+              : "0.0";
 
             return (
               <tr
@@ -96,75 +68,22 @@ export function PortfolioTable({ positions, quotes, isLoadingQuotes }: Portfolio
                 <td className="px-5 py-4 whitespace-nowrap text-right text-zinc-900 dark:text-zinc-300">
                   {formatCurrency(pos.avgPrice)}
                 </td>
-                <td className="px-5 py-4 whitespace-nowrap text-right font-medium">
-                  {isLoadingQuotes ? (
-                    <Skeleton className="h-5 w-16 ml-auto" />
-                  ) : currentPrice > 0 ? (
-                    <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(currentPrice)}</span>
-                  ) : (
-                    <span className="text-zinc-400 dark:text-zinc-600">—</span>
-                  )}
-                </td>
                 <td className="px-5 py-4 whitespace-nowrap text-right font-medium text-zinc-900 dark:text-zinc-100">
-                  {isLoadingQuotes ? (
-                    <Skeleton className="h-5 w-24 ml-auto" />
-                  ) : currentPrice > 0 ? (
-                    formatCurrency(currentBalance)
-                  ) : (
-                    <span className="text-zinc-400 dark:text-zinc-600">—</span>
-                  )}
+                  {formatCurrency(pos.balance)}
                 </td>
-                <td className="px-5 py-4 whitespace-nowrap text-right font-medium">
-                  {isLoadingQuotes ? (
-                    <Skeleton className="h-5 w-20 ml-auto" />
-                  ) : currentPrice > 0 ? (
-                    <span
-                      className={
-                        isPositive
-                          ? "text-emerald-600 dark:text-emerald-500"
-                          : isNegative
-                          ? "text-red-600 dark:text-red-500"
-                          : "text-zinc-500 dark:text-zinc-400"
-                      }
-                    >
-                      {variation > 0 ? "+" : ""}{formatCurrency(variation)}
-                    </span>
-                  ) : (
-                    <span className="text-zinc-400 dark:text-zinc-600">—</span>
-                  )}
+                <td className="px-5 py-4 whitespace-nowrap text-right text-zinc-500 dark:text-zinc-400">
+                  {pos.totalOtherCosts > 0 ? formatCurrency(pos.totalOtherCosts) : "—"}
                 </td>
                 <td className="px-5 py-4 whitespace-nowrap text-right">
-                  {isLoadingQuotes ? (
-                    <Skeleton className="h-6 w-20 ml-auto rounded-full" />
-                  ) : currentPrice > 0 ? (
-                    <div className="flex items-center justify-end">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          isPositive
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                            : isNegative
-                            ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                            : "bg-zinc-100 text-zinc-700 dark:bg-zinc-500/10 dark:text-zinc-400"
-                        }`}
-                      >
-                        {isPositive ? (
-                          <TrendingUp className="w-3 h-3" />
-                        ) : isNegative ? (
-                          <TrendingDown className="w-3 h-3" />
-                        ) : (
-                          <Minus className="w-3 h-3" />
-                        )}
-                        {profitability > 0 ? "+" : ""}{formatPercent(profitability)}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-zinc-400 dark:text-zinc-600">—</span>
-                  )}
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
+                    {pctCarteira}%
+                  </span>
                 </td>
               </tr>
             );
           })}
         </tbody>
+        {/* Footer com totais */}
         <tfoot className="bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-300 dark:border-zinc-700">
           <tr className="font-semibold text-zinc-900 dark:text-zinc-100">
             <td className="px-5 py-4 text-sm">
@@ -172,44 +91,13 @@ export function PortfolioTable({ positions, quotes, isLoadingQuotes }: Portfolio
             </td>
             <td className="px-5 py-4"></td>
             <td className="px-5 py-4"></td>
-            <td className="px-5 py-4"></td>
             <td className="px-5 py-4 text-right text-sm">
-              {isLoadingQuotes ? <Skeleton className="h-5 w-24 ml-auto" /> : formatCurrency(totalPortfolioValue)}
+              {formatCurrency(totalPortfolio)}
             </td>
-            <td className="px-5 py-4 text-right text-sm">
-              {isLoadingQuotes ? (
-                <Skeleton className="h-5 w-24 ml-auto" />
-              ) : (
-                <span
-                  className={
-                    totalProfit > 0
-                      ? "text-emerald-600 dark:text-emerald-500"
-                      : totalProfit < 0
-                      ? "text-red-600 dark:text-red-500"
-                      : "text-zinc-900 dark:text-zinc-100"
-                  }
-                >
-                  {totalProfit > 0 ? "+" : ""}{formatCurrency(totalProfit)}
-                </span>
-              )}
+            <td className="px-5 py-4 text-right text-sm text-zinc-500 dark:text-zinc-400">
+              {formatCurrency(positions.reduce((sum, p) => sum + p.totalOtherCosts, 0))}
             </td>
-            <td className="px-5 py-4 text-right text-sm">
-              {isLoadingQuotes ? (
-                <Skeleton className="h-5 w-16 ml-auto" />
-              ) : (
-                <span
-                  className={
-                    totalProfit > 0
-                      ? "text-emerald-600 dark:text-emerald-500"
-                      : totalProfit < 0
-                      ? "text-red-600 dark:text-red-500"
-                      : "text-zinc-900 dark:text-zinc-100"
-                  }
-                >
-                  {totalInvested > 0 ? formatPercent((totalPortfolioValue / totalInvested) - 1) : "0,00%"}
-                </span>
-              )}
-            </td>
+            <td className="px-5 py-4 text-right text-sm">100%</td>
           </tr>
         </tfoot>
       </table>
