@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Home, Briefcase, Wallet, History, Settings, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Bot, Home, Briefcase, Wallet, History, Settings, X, PanelLeftClose, PanelLeftOpen, BarChart3 } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,7 +16,8 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
   const pathname = usePathname();
 
   const links = [
-    { href: "/", label: "Dashboard", icon: <Home className="w-5 h-5 shrink-0" /> },
+    { href: "/", label: "Home", icon: <Home className="w-5 h-5 shrink-0" /> },
+    { href: "/dashboard", label: "Dashboard", icon: <BarChart3 className="w-5 h-5 shrink-0" /> },
     { href: "/carteira", label: "Meus Ativos", icon: <Briefcase className="w-5 h-5 shrink-0" /> },
     { href: "/carteira/lancamentos", label: "Lançamentos", icon: <Wallet className="w-5 h-5 shrink-0" /> },
     { href: "/historico", label: "Histórico Mensal", icon: <History className="w-5 h-5 shrink-0" /> },
