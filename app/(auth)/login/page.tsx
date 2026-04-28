@@ -8,12 +8,23 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bot } from 'lucide-react'
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { message?: string }
+}) {
   const [isLogin, setIsLogin] = useState(true)
+  const message = searchParams?.message
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
-      <Card className="w-full max-w-md border-zinc-800 bg-zinc-900">
+      <div className="w-full max-w-md space-y-4">
+        {message && (
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm text-center animate-in fade-in slide-in-from-top-2">
+            {message}
+          </div>
+        )}
+        <Card className="border-zinc-800 bg-zinc-900">
         <CardHeader className="space-y-1 items-center">
           <div className="bg-indigo-600 p-2 rounded-lg mb-2">
             <Bot className="w-6 h-6 text-white" />
@@ -112,5 +123,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  </div>
   )
 }

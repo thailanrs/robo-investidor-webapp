@@ -34,11 +34,11 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect('/login?message=Não foi possível autenticar o usuário')
+    redirect(`/login?message=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/', 'layout')
-  redirect('/carteira')
+  redirect('/carteira/lancamentos')
 }
 
 export async function signup(formData: FormData) {
@@ -57,10 +57,10 @@ export async function signup(formData: FormData) {
   })
 
   if (error) {
-    redirect('/login?message=Não foi possível cadastrar o usuário')
+    redirect(`/login?message=${encodeURIComponent(error.message)}`)
   }
 
-  redirect('/login?message=Verifique seu e-mail para continuar')
+  redirect('/login?message=Verifique seu e-mail para confirmar o cadastro')
 }
 
 export async function signInWithGoogle() {
