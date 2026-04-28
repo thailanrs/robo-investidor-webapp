@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { login, signup, signInWithGoogle } from './actions'
-import { Button } from '@/components/ui/button'
+import { login, signup, signInWithGoogle, resetPassword } from './actions'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bot } from 'lucide-react'
+import { Bot, Eye, EyeOff } from 'lucide-react'
 import React from 'react'
 
 export default function LoginPage({
@@ -16,13 +15,77 @@ export default function LoginPage({
 }) {
   const params = React.use(searchParams)
   const [isLogin, setIsLogin] = useState(true)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const message = params.message
 
+  // Formulário de Recuperação de Senha
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
+        <div className="w-full max-w-md space-y-4">
+          {message && (
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm text-center">
+              {message}
+            </div>
+          )}
+          <Card className="border-zinc-800 bg-zinc-900">
+            <CardHeader className="space-y-1 items-center">
+              <div className="bg-indigo-600 p-2 rounded-lg mb-2">
+                <Bot className="w-6 h-6 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold tracking-tight text-zinc-50">
+                Recuperar Senha
+              </CardTitle>
+              <CardDescription className="text-zinc-400">
+                Informe seu email para receber um link de redefinição
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email" className="text-zinc-300">Email</Label>
+                  <Input
+                    id="reset-email"
+                    name="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    required
+                    className="bg-zinc-950 border-zinc-800 text-zinc-50 focus-visible:ring-indigo-500"
+                  />
+                </div>
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    formAction={resetPassword}
+                    className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring h-10 px-4 py-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    Enviar Link de Recuperação
+                  </button>
+                </div>
+              </form>
+              <div className="text-center text-sm text-zinc-400 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4"
+                >
+                  Voltar para o Login
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Formulário de Login / Cadastro
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
       <div className="w-full max-w-md space-y-4">
         {message && (
-          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm text-center animate-in fade-in slide-in-from-top-2">
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm text-center">
             {message}
           </div>
         )}
@@ -53,13 +116,34 @@ export default function LoginPage({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-zinc-300">Senha</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="bg-zinc-950 border-zinc-800 text-zinc-50 focus-visible:ring-indigo-500"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="bg-zinc-950 border-zinc-800 text-zinc-50 focus-visible:ring-indigo-500 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {isLogin && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(true)}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="pt-2">
                 <button

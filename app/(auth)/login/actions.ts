@@ -85,3 +85,22 @@ export async function signInWithGoogle() {
     redirect(data.url)
   }
 }
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+
+  if (!email) {
+    redirect('/login?message=' + encodeURIComponent('Informe um email válido'))
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${getURL()}/auth/callback`,
+  })
+
+  if (error) {
+    redirect(`/login?message=${encodeURIComponent(error.message)}`)
+  }
+
+  redirect('/login?message=' + encodeURIComponent('Link de redefinição enviado! Verifique seu email.'))
+}

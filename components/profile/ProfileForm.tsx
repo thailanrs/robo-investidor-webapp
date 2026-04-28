@@ -1,15 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Upload, User as UserIcon } from "lucide-react";
+import { Loader2, Upload, User as UserIcon, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useUser } from "@/contexts/UserContext";
 
 const profileSchema = z.object({
   nome_completo: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
+  nova_senha: z.string().optional(),
+  confirmar_senha: z.string().optional(),
+}).refine((data) => {
+  if (data.nova_senha && data.nova_senha.length > 0 && data.nova_senha.length < 6) {
+    return false;
+  }
+  return true;
+}, {
+  message: "A senha deve ter pelo menos 6 caracteres.",
+  path: ["nova_senha"],
+}).refine((data) => {
+  if (data.nova_senha && data.nova_senha !== data.confirmar_senha) {
+    return false;
+  }
+  return true;
+}, {
+  message: "As senhas não coincidem.",
+  path: ["confirmar_senha"],
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -17,25 +35,28 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 export function ProfileForm() {
   const user = useUser();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user.profile?.avatar_url || null);
+  const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
-    setValue,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       nome_completo: user.profile?.nome_completo || "",
+      nova_senha: "",
+      confirmar_senha: "",
     },
   });
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      const supabase = createClient();
       setUploading(true);
       setMessage(null);
 
@@ -46,32 +67,20 @@ export function ProfileForm() {
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+      const supabase = createClient();
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
       
-      const newAvatarUrl = data.publicUrl;
-      setAvatarUrl(newAvatarUrl);
-
-      // Save to profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .upsert({ 
-          id: user.id, 
-          avatar_url: newAvatarUrl,
-          data_atualizacao: new Date().toISOString()
-        });
-
-      if (updateError) throw updateError;
-      
-      setMessage({ type: 'success', text: 'Avatar atualizado com sucesso!' });
+      // Salva localmente, mas NÃO envia para o banco ainda
+      setPendingAvatarUrl(data.publicUrl);
+      setAvatarUrl(data.publicUrl);
+      setMessage({ type: 'success', text: 'Imagem carregada! Clique em "Salvar Alterações" para confirmar.' });
       
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Erro ao fazer upload do avatar' });
@@ -85,30 +94,47 @@ export function ProfileForm() {
     try {
       const supabase = createClient();
 
-      const { error } = await supabase
-        .from("profiles")
-        .upsert({ 
-          id: user.id, 
-          nome_completo: data.nome_completo,
-          avatar_url: avatarUrl,
-          data_atualizacao: new Date().toISOString()
-        });
+      // 1. Atualizar perfil no banco
+      const profileData: any = { 
+        id: user.id, 
+        nome_completo: data.nome_completo,
+        data_atualizacao: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      // Se houve upload pendente, inclui a URL do avatar
+      if (pendingAvatarUrl) {
+        profileData.avatar_url = pendingAvatarUrl;
+      } else if (avatarUrl) {
+        profileData.avatar_url = avatarUrl;
+      }
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert(profileData);
+
+      if (profileError) throw profileError;
+
+      // 2. Se uma nova senha foi informada, atualizar via Auth
+      if (data.nova_senha && data.nova_senha.length >= 6) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: data.nova_senha,
+        });
+        if (passwordError) throw passwordError;
+      }
       
+      setPendingAvatarUrl(null);
+      reset({ 
+        nome_completo: data.nome_completo, 
+        nova_senha: "", 
+        confirmar_senha: "" 
+      });
       setMessage({ type: 'success', text: 'Perfil salvo com sucesso!' });
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Erro ao salvar perfil' });
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-      </div>
-    );
-  }
+  const displayAvatar = avatarUrl;
 
   return (
     <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 max-w-xl mx-auto shadow-sm">
@@ -131,8 +157,8 @@ export function ProfileForm() {
         </label>
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <UserIcon className="w-10 h-10 text-zinc-400" />
             )}
@@ -175,7 +201,7 @@ export function ProfileForm() {
 
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-            Email de Cadastro (Leitura Apenas)
+            Email de Cadastro
           </label>
           <input
             type="text"
@@ -183,6 +209,61 @@ export function ProfileForm() {
             disabled
             className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-zinc-500 dark:text-zinc-500 text-sm cursor-not-allowed"
           />
+        </div>
+
+        <div className="border-t border-zinc-200 dark:border-zinc-800 my-6" />
+
+        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Alterar Senha</h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 -mt-2">
+          Deixe em branco para manter a senha atual. Caso tenha se registrado via Google, use estes campos para criar uma senha.
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Nova Senha
+          </label>
+          <div className="relative">
+            <input
+              {...register("nova_senha")}
+              type={showPassword ? "text" : "password"}
+              className="w-full px-3 py-2 pr-10 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition-shadow"
+              placeholder="Mínimo de 6 caracteres"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {errors.nova_senha && (
+            <p className="text-xs text-red-500 mt-1">{errors.nova_senha.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Confirmar Nova Senha
+          </label>
+          <div className="relative">
+            <input
+              {...register("confirmar_senha")}
+              type={showConfirmPassword ? "text" : "password"}
+              className="w-full px-3 py-2 pr-10 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm transition-shadow"
+              placeholder="Repita a nova senha"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {errors.confirmar_senha && (
+            <p className="text-xs text-red-500 mt-1">{errors.confirmar_senha.message}</p>
+          )}
         </div>
 
         <div className="pt-4">

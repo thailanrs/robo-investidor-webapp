@@ -13,11 +13,17 @@ export function AppLayoutClient({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <UserProvider user={user}>
       <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
-        <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+        <Sidebar
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
         
         <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
           <Header onMenuClick={() => setSidebarOpen(true)} />
