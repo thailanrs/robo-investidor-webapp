@@ -10,6 +10,7 @@ SaaS de gestão de patrimônio e análise quantitativa de ativos da B3 (Ações,
 * **Backend & Auth:** Supabase (PostgreSQL, Row Level Security habilitado, `@supabase/ssr`)
 * **IA Generativa:** Google Gemini (gemini-2.5-flash) via `@google/generative-ai`
 * **Scraping e Dados Financeiros:** `cheerio` (Fundamentus) e `yahoo-finance2` (Histórico/Cotações)
+* **Data Fetching Client:** `@tanstack/react-query` (useQuery, useMutation, useQueryClient)
 * **Deploy:** Vercel
 
 ## Arquitetura de Autenticação
@@ -33,6 +34,39 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 * **Sidebar** (`components/layout/Sidebar.tsx`): Colapsável (ícone-only ↔ ícone+texto). Estado gerenciado no `AppLayoutClient`.
 * **Header** (`components/layout/Header.tsx`): Top bar com botão de menu mobile e `UserDropdown`.
 * **UserDropdown** (`components/layout/UserDropdown.tsx`): Exibe avatar/iniciais, nome, link para perfil e logout. Dados vêm do `useUser()`.
+
+## React Query (TanStack Query)
+
+O `@tanstack/react-query` é usado em páginas client para data fetching com cache e mutations.
+
+### Setup obrigatório
+
+> ⚠️ **Causa raiz do bug `/proventos` (29/04/2026):** A página `app/(app)/proventos/page.tsx` usa `useQuery`, `useMutation` e `useQueryClient`, mas o `app/(app)/layout.tsx` não possuía `QueryClientProvider` na árvore. Isso causa erro de runtime no Next.js e a página exibe "This page couldn't load". **Qualquer nova página que use hooks do React Query depende desse provider.**
+
+* O **`QueryClientProvider`** deve envolver toda a árvore `app/(app)/` via um componente `Providers` client-side.
+* **Regra:** Nunca use `useQuery`, `useMutation` ou `useQueryClient` em uma página sem garantir que o `QueryClientProvider` esteja presente no layout pai.
+
+### Padrão de implementação
+
+```tsx
+// components/Providers.tsx  ← criar este arquivo
+"use client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+```
+
+```tsx
+// app/(app)/layout.tsx  ← envolver {children} com <Providers>
+import { Providers } from "@/components/Providers";
+
+// Dentro do JSX do layout:
+// <Providers>{children}</Providers>
+```
 
 ## Funções Reutilizáveis de Scraping (Importante para Agentes de IA)
 
@@ -72,3 +106,4 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 5.  **Autenticação Client-Side:** Nunca chamar `supabase.auth.getUser()` em componentes client. Sempre use `useUser()` do Context. A sessão é gerenciada exclusivamente server-side via cookies.
 6.  **Migrations:** Sempre criar migrations em `./utils/supabase/migrations/` — ver seção "Migrations de Banco de Dados" acima.
 7.  **Reuso de Código:** Nunca reimplementar funções já existentes. Ver seção "Funções Reutilizáveis de Scraping" acima.
+8.  **React Query:** Toda página que use `useQuery`, `useMutation` ou `useQueryClient` depende do `QueryClientProvider` no layout pai (`app/(app)/layout.tsx` via `components/Providers.tsx`). Ver seção "React Query" acima.
