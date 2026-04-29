@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { AppLayoutClient } from "@/components/layout/AppLayoutClient";
 import { UserContextType } from "@/contexts/UserContext";
+import { Providers } from "@/components/Providers";
 
 export default async function AuthAppLayout({
   children,
@@ -28,5 +29,9 @@ export default async function AuthAppLayout({
     profile: profile || null,
   };
 
-  return <AppLayoutClient user={userData}>{children}</AppLayoutClient>;
+  return (
+    <Providers>
+      <AppLayoutClient user={userData}>{children}</AppLayoutClient>
+    </Providers>
+  );
 }
