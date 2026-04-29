@@ -1,7 +1,7 @@
 # Estado Atual do Projeto (State of Project)
 
 ## Tabelas no Supabase (Database Schema)
-* `ideal_portfolio_snapshots`: id, snapshot_date, tickers (jsonb), created_at
+* `ideal_portfolio_snapshots`: id (uuid, PK), snapshot_date (date, not null), tickers (jsonb, not null), created_at (timestamptz, default now())
 * `historico_analises`: id, data_analise, dados_acoes (jsonb), resumo_ia, user_id
 * `users` (Supabase Auth nativo)
 * `transactions`: id, user_id, ticker, type, quantity, unit_price, other_costs, date, created_at
@@ -24,19 +24,19 @@
 * [x] Perfil: Configuração de Perfil, Avatar e Alteração de Senha
 * [x] Login UX: Toggle de senha, fluxo "Esqueci minha senha", mensagens de erro/sucesso
 * [x] Redefinição de Senha via Supabase `resetPasswordForEmail`
-* [x] ROB-13 - CRUD de Proventos (Dividendos/JCP/FII) + Página `/proventos` com KPIs, Gráfico de Evolução, Tabela com Filtros
+* [x] HU 1.5 - Dashboard com Análise Quantitativa
+* [x] ROB-12 - Performance Comparativa (ideal_portfolio_snapshots, API, Gráfico Recharts)
+* [x] ROB-12 - Redesign Premium do Header (Search, Icons, User Badge)
+* [x] ROB-12 - Componentes Globais UI (Input e Select em Glassmorphism)
+* [x] ROB-13 - CRUD de Proventos (Dividendos/JCP/FII) + Página `/proventos` com KPIs, Gráfico de Evolução, Tabela com Filtros (PR #22 mergeado em 29/04/2026)
 
 ## Regras de Negócio
 * **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`.
 * **Preço Médio Ponderado:** Calculado apenas sobre operações de COMPRA: `PM = (Σ qtd_compra × preço_compra) / Σ qtd_compra`. Operações de VENDA reduzem a quantidade em carteira mas **NÃO** alteram o preço médio. Engine em `lib/portfolio.ts`.
 
 ## Trabalho em Progresso
-* [x] HU 1.5 - Implementar Dashboard com Análise Quantitativa
-* [x] [Dashboard] Gráficos de Composição de Carteira e Evolução
-* [x] ROB-12 - Performance Comparativa (ideal_portfolio_snapshots, API, Gráfico Recharts)
-* [x] ROB-12 - Redesign Premium do Header (Search, Icons, User Badge)
-* [x] ROB-12 - Componentes Globais UI (Input e Select em Glassmorphism)
-* [x] ROB-13 - Dividends CRUD & History Page (PR #22 mergeado em 29/04/2026)
+* [ ] ROB-14 - Motor de Ranking da Fórmula Mágica (dependência do ROB-16)
+* [ ] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
 
 ## ⚠️ Pendências de Segurança (Supabase Advisors)
 As seguintes issues de segurança foram identificadas e devem ser endereçadas em sprints futuras:
