@@ -14,14 +14,14 @@
 
 ## 🗂️ Convenção de Migrations (CRÍTICO)
 
-> ⚠️ **Lição aprendida (ROB-13):** O agente Jules criou migrations em `./supabase/migrations/` — pasta **não reconhecida** pelo pipeline de deploy. A migration não foi executada automaticamente, causando erro de runtime em produção (`dividends` table not found).
+> ⚠️ **Padronização (29/04/2026):** Para permitir a integração com o GitHub Actions e a CLI do Supabase, o caminho das migrations foi padronizado para a raiz do projeto. O problema anterior de "pasta não reconhecida" foi resolvido com a inclusão do `config.toml` na raiz e a configuração do workflow de CI/CD.
 
 ### Regra Absoluta
 **Todo arquivo de migration SQL deve ser criado em:**
 ```
-./utils/supabase/migrations/
+./supabase/migrations/
 ```
-**Nunca** em `./supabase/migrations/`, `./db/`, `./sql/` ou qualquer outro caminho.
+**Nunca** em `./utils/supabase/migrations/`, `./db/`, `./sql/` ou qualquer outro caminho.
 
 ### Nomenclatura
 ```
@@ -30,7 +30,7 @@ YYYYMMDDHHMMSS_descricao_em_snake_case.sql
 Exemplo: `20260429120000_create_dividends.sql`
 
 ### Checklist obrigatório antes de abrir PR com DDL
-- [ ] Arquivo `.sql` está em `./utils/supabase/migrations/`
+- [ ] Arquivo `.sql` está em `./supabase/migrations/`
 - [ ] SQL é idempotente (`IF NOT EXISTS` onde aplicável)
 - [ ] RLS habilitado na tabela (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`)
 - [ ] Política RLS criada com `auth.uid() = user_id`

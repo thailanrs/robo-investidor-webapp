@@ -26,6 +26,7 @@
     "react-hook-form": "^7.74.0",
     "recharts": "^3.8.1",
     "shadcn": "^4.5.0",
+    "supabase": "^2.95.6",
     "tailwind-merge": "^3.5.0",
     "tailwindcss-animate": "^1.0.7",
     "yahoo-finance2": "^3.14.0",
