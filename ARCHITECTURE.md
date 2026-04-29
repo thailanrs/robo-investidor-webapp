@@ -34,6 +34,14 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 * **Header** (`components/layout/Header.tsx`): Top bar com botão de menu mobile e `UserDropdown`.
 * **UserDropdown** (`components/layout/UserDropdown.tsx`): Exibe avatar/iniciais, nome, link para perfil e logout. Dados vêm do `useUser()`.
 
+## Funções Reutilizáveis de Scraping (Importante para Agentes de IA)
+
+> ⚠️ **Regra de Reuso:** Nunca duplicar lógica de scraping ou ranking. As funções abaixo são exported nomeados e devem ser importadas diretamente onde necessário.
+
+| Função | Arquivo | Descrição |
+|---|---|---|
+| `fetchFundamentusData()` | `app/api/fundamentus/route.ts` | Executa o scraping do Fundamentus, aplica filtros de qualidade e retorna os tickers rankeados pela Fórmula Mágica como `string[]`. Deve ser **importada** pelo cron job (ROB-16) e qualquer outra rota que precise do ranking — nunca reimplementada. |
+
 ## 🗂️ Migrations de Banco de Dados (CRÍTICO)
 
 > ⚠️ **Lição aprendida (ROB-13):** O Jules criou migrations em `./supabase/migrations/` — pasta ignorada pelo CI/CD. O pipeline da Vercel e o processo de deploy **não executam** migrations automaticamente a partir dessa pasta. Toda migration deve ser colocada no caminho correto abaixo.
@@ -57,9 +65,10 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 - [ ] Smoke test da rota/funcionalidade em produção após deploy
 
 ## Princípios de Desenvolvimento (Para Agentes de IA)
-1.  **Segurança:** Todas as rotas de API sensíveis devem validar a sessão do usuário via Supabase Auth. Tabelas do banco de dados utilizam RLS atrelado ao `auth.uid()`.
+1.  **Segurança:** Todas as rotas de API sensíveis devem validar a sessão do usuário via Supabase Auth. Tabelas do banco de dados utilizam RLS atrelado ao `auth.uid()`. Rotas de cron devem validar `Authorization: Bearer {CRON_SECRET}`.
 2.  **Performance:** Utilize Server Components sempre que possível. Processamentos pesados de dados (como o cálculo do ranking quantitativo) não devem bloquear a thread principal (UI).
 3.  **Design System:** O padrão visual é o Dark Mode com acentos em cores neon (ex: verde para alta, vermelho para baixa). Gráficos devem usar bibliotecas leves (Recharts ou Chart.js).
 4.  **Lançamentos:** A arquitetura do banco de dados para a carteira do usuário deve seguir o padrão "Event Sourcing" (Ledger). Não atualize saldos diretamente; grave transações de COMPRA/VENDA e calcule o saldo e preço médio a partir do histórico. O campo `other_costs` (taxas/emolumentos) **NÃO** entra no cálculo de preço médio ou valor do ativo — é usado apenas para representar o custo total da operação.
 5.  **Autenticação Client-Side:** Nunca chamar `supabase.auth.getUser()` em componentes client. Sempre use `useUser()` do Context. A sessão é gerenciada exclusivamente server-side via cookies.
 6.  **Migrations:** Sempre criar migrations em `./utils/supabase/migrations/` — ver seção "Migrations de Banco de Dados" acima.
+7.  **Reuso de Código:** Nunca reimplementar funções já existentes. Ver seção "Funções Reutilizáveis de Scraping" acima.
