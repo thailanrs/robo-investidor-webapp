@@ -146,7 +146,7 @@ export default function ProventosPage() {
               className="bg-zinc-900/60 backdrop-blur-md border border-white/8 rounded-xl px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 w-full sm:w-40"
             />
             <div className="w-full sm:w-40">
-              <Select value={typeFilter} onValueChange={(v: DividendType | "ALL") => setTypeFilter(v)}>
+              <Select value={typeFilter} onValueChange={(v) => { if (v !== null) setTypeFilter(v as DividendType | "ALL"); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
