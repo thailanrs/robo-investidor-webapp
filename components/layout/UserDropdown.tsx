@@ -25,21 +25,21 @@ export function UserDropdown() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 focus:outline-none group rounded-full p-1 pr-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+        className="flex items-center gap-3 focus:outline-none group rounded-full p-1 pl-3 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
       >
+        <div className="hidden md:flex flex-col items-end">
+          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{displayName}</span>
+          <span className="text-[10px] font-bold tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
+            {userLevel}
+          </span>
+        </div>
+
         <div className="w-9 h-9 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center overflow-hidden ring-2 ring-emerald-500/80 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950 transition-all duration-300 group-hover:ring-emerald-400">
           {avatarUrl ? (
             <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
           ) : (
             <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{initials}</span>
           )}
-        </div>
-
-        <div className="hidden md:flex flex-col items-start">
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{displayName}</span>
-          <span className="text-[10px] font-bold tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
-            {userLevel}
-          </span>
         </div>
       </button>
 
