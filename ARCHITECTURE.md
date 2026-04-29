@@ -82,18 +82,18 @@ import { Providers } from "@/components/Providers";
 
 ### Caminho Canônico para Migrations
 ```
-./utils/supabase/migrations/
+./supabase/migrations/
 ```
 
 ### Regras
-1. **Sempre** criar arquivos `.sql` de migration em `./utils/supabase/migrations/` — nunca em `./supabase/migrations/` ou qualquer outro caminho.
+1. **Sempre** criar arquivos `.sql` de migration em `./supabase/migrations/` — nunca em `./utils/supabase/migrations/` ou qualquer outro caminho.
 2. Nomear o arquivo com timestamp + descrição: `YYYYMMDDHHMMSS_nome_da_migration.sql` (ex: `20260429120000_create_dividends.sql`).
 3. O SQL deve ser **idempotente** quando possível: usar `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `DO $$ ... IF NOT EXISTS ... $$`.
 4. **Toda migration mergeada na `main` deve ser executada manualmente no Supabase de produção** até que um pipeline automatizado seja implementado. Registrar no PR que a migration foi aplicada.
 5. Após aplicar a migration em produção, atualizar o `STATE.md` com as novas tabelas/campos.
 
 ### Checklist de Release (por PR com DDL)
-- [ ] Arquivo `.sql` criado em `./utils/supabase/migrations/`
+- [ ] Arquivo `.sql` criado em `./supabase/migrations/`
 - [ ] Migration executada no Supabase de produção
 - [ ] Tabela/campos novos registrados no `STATE.md`
 - [ ] Smoke test da rota/funcionalidade em produção após deploy
@@ -104,6 +104,6 @@ import { Providers } from "@/components/Providers";
 3.  **Design System:** O padrão visual é o Dark Mode com acentos em cores neon (ex: verde para alta, vermelho para baixa). Gráficos devem usar bibliotecas leves (Recharts ou Chart.js).
 4.  **Lançamentos:** A arquitetura do banco de dados para a carteira do usuário deve seguir o padrão "Event Sourcing" (Ledger). Não atualize saldos diretamente; grave transações de COMPRA/VENDA e calcule o saldo e preço médio a partir do histórico. O campo `other_costs` (taxas/emolumentos) **NÃO** entra no cálculo de preço médio ou valor do ativo — é usado apenas para representar o custo total da operação.
 5.  **Autenticação Client-Side:** Nunca chamar `supabase.auth.getUser()` em componentes client. Sempre use `useUser()` do Context. A sessão é gerenciada exclusivamente server-side via cookies.
-6.  **Migrations:** Sempre criar migrations em `./utils/supabase/migrations/` — ver seção "Migrations de Banco de Dados" acima.
+6.  **Migrations:** Sempre criar migrations em `./supabase/migrations/` — ver seção "Migrations de Banco de Dados" acima.
 7.  **Reuso de Código:** Nunca reimplementar funções já existentes. Ver seção "Funções Reutilizáveis de Scraping" acima.
 8.  **React Query:** Toda página que use `useQuery`, `useMutation` ou `useQueryClient` depende do `QueryClientProvider` no layout pai (`app/(app)/layout.tsx` via `components/Providers.tsx`). Ver seção "React Query" acima.
