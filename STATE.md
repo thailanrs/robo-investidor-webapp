@@ -6,6 +6,7 @@
 * `users` (Supabase Auth nativo)
 * `transactions`: id, user_id, ticker, type, quantity, unit_price, other_costs, date, created_at
 * `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao, nivel
+* `dividends`: id, user_id (references auth.users), ticker, type (enum), amount, quantity, payment_date, notes, created_at, updated_at
 * [NOVAS TABELAS DEVEM SER REGISTRADAS AQUI COM SEUS CAMPOS EXATOS]
 
 ## Arquitetura de Autenticação
