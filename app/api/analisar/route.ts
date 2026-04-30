@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchFundamentusData } from '../fundamentus/route';
 import { analisarAtivo, AnaliseAtivoResult } from '@/lib/yahooFinanceService';
-import { createClient } from '@/utils/supabase/server';
+import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60; // Permite que a API Vercel rode por até 60s (necessário para múltiplos fetches)
@@ -14,7 +15,7 @@ type TickerResult = Exclude<AnaliseAtivoResult, null> & {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabaseUser = await createServerClient();
     // 1. Obtém os 90 tickers preliminares da Fórmula Mágica (Fundamentus)
     const tickers = await fetchFundamentusData();
     
@@ -104,7 +105,11 @@ export async function GET() {
     // 9. Salvar no Histórico do Supabase
     if (finalistas.length > 0) {
       try {
-        const { error: dbError } = await supabase.from('historico_analises').insert([
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        const { error: dbError } = await supabaseAdmin.from('historico_analises').insert([
           { dados_acoes: finalistas, resumo_ia: resumoIA }
         ]);
 
