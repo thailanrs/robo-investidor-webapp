@@ -24,8 +24,9 @@ export async function GET() {
 
     // 2. Executa a análise profunda do Yahoo Finance em paralelo (com limite para não estourar memória, mas allSettled é seguro)
     const promises = tickers.map(async (ticker, index) => {
-      const result = await analisarAtivo(ticker);
+      const result = await analisarAtivo(`${ticker}.SA`);
       if (result) {
+        result.Ticker = ticker; // Remove o '.SA' do ticker para exibição limpa na UI
         // O index representa o Ranking da Fórmula Mágica (já vem ordenado do Fundamentus)
         // Reais (0-59), Financeiras (60-89). Para simplificar, usamos a posição absoluta no array.
         return {
@@ -101,16 +102,20 @@ export async function GET() {
     }
 
     // 9. Salvar no Histórico do Supabase
-    try {
-      const { error: dbError } = await supabase.from('historico_analises').insert([
-        { dados_acoes: finalistas, resumo_ia: resumoIA }
-      ]);
+    if (finalistas.length > 0) {
+      try {
+        const { error: dbError } = await supabase.from('historico_analises').insert([
+          { dados_acoes: finalistas, resumo_ia: resumoIA }
+        ]);
 
-      if (dbError) {
-        console.error("Erro ao salvar no Supabase:", dbError);
+        if (dbError) {
+          console.error("Erro ao salvar no Supabase:", dbError);
+        }
+      } catch(e) {
+        console.error("Erro inesperado ao salvar no Supabase:", e);
       }
-    } catch(e) {
-      console.error("Erro inesperado ao salvar no Supabase:", e);
+    } else {
+      console.warn("Nenhum finalista válido foi retornado. Pulando o salvamento no banco de dados.");
     }
 
     return NextResponse.json({
