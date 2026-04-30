@@ -206,7 +206,7 @@ export function PerformanceComparisonChart() {
                     ...props,
                     payload: props.payload?.map(p => ({
                       ...p,
-                      payload: { value: totals[p.value] }
+                      payload: { value: p.value ? totals[String(p.value)] : 0 }
                     }))
                   })}
                 />
