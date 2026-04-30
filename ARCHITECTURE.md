@@ -107,3 +107,4 @@ import { Providers } from "@/components/Providers";
 6.  **Migrations:** Sempre criar migrations em `./supabase/migrations/` — ver seção "Migrations de Banco de Dados" acima.
 7.  **Reuso de Código:** Nunca reimplementar funções já existentes. Ver seção "Funções Reutilizáveis de Scraping" acima.
 8.  **React Query:** Toda página que use `useQuery`, `useMutation` ou `useQueryClient` depende do `QueryClientProvider` no layout pai (`app/(app)/layout.tsx` via `components/Providers.tsx`). Ver seção "React Query" acima.
+9.  **Scraping e Integrações Externas:** Toda chamada a sites de terceiros com risco de bloqueio de IP por WAF (como Fundamentus e B3) **nunca** deve ser feita diretamente via API Routes da Vercel. Deve ser extraída para uma Edge Function no Supabase (Deno Deploy), que tem um pool de IPs diferente.

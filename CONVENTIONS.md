@@ -43,3 +43,4 @@ Exemplo: `20260429120000_create_dividends.sql`
 - [ ] Confirmar no PR que a migration foi aplicada em produção
 
 10. **TypeScript Strict:** Sempre tratar casos de `null` em callbacks de componentes Radix UI (ex: `onValueChange` do `<Select>`). O tipo do handler deve aceitar `null` ou filtrar com guard `if (v !== null)`.
+11. **APIs Externas e Scraping (CRÍTICO):** Toda chamada a fontes externas com risco de bloqueio por IP de datacenter (Fundamentus, B3, etc.) deve passar OBRIGATORIAMENTE pela camada de Edge Functions do Supabase. Nunca realize scraping ou fetch direto para essas fontes a partir da API Routes da Vercel (`app/api/*`). A Vercel (AWS) frequentemente tem seus IPs bloqueados por WAFs como Cloudflare.
