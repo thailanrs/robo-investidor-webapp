@@ -29,6 +29,7 @@
 * [x] ROB-12 - Redesign Premium do Header (Search, Icons, User Badge)
 * [x] ROB-12 - Componentes Globais UI (Input e Select em Glassmorphism)
 * [x] ROB-13 - CRUD de Proventos (Dividendos/JCP/FII) + Página `/proventos` com KPIs, Gráfico de Evolução, Tabela com Filtros (PR #22 mergeado em 29/04/2026)
+* [x] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
 
 ## Regras de Negócio
 * **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`.
@@ -36,7 +37,6 @@
 
 ## Trabalho em Progresso
 * [ ] ROB-14 - Motor de Ranking da Fórmula Mágica (dependência do ROB-16)
-* [ ] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
 
 ## ⚠️ Pendências de Segurança (Supabase Advisors)
 As seguintes issues de segurança foram identificadas e devem ser endereçadas em sprints futuras:
