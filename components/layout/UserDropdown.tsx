@@ -46,7 +46,7 @@ export function UserDropdown() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-56 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 z-50 animate-in fade-in slide-in-from-top-2">
+          <div className="absolute right-0 mt-2 w-full min-w-[160px] bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 z-50 animate-in fade-in slide-in-from-top-2">
             <div className="px-4 py-3 border-b border-zinc-100/50 dark:border-zinc-800/50">
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{displayName}</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>

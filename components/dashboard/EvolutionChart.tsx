@@ -3,116 +3,179 @@
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Mock data representing the last 12 months for demonstration
-const mockData = [
-  { month: '04/25', valorAplicado: 32000, ganhoCapital: 1500 },
-  { month: '05/25', valorAplicado: 26000, ganhoCapital: 400 },
-  { month: '06/25', valorAplicado: 26200, ganhoCapital: 500 },
-  { month: '07/25', valorAplicado: 26500, ganhoCapital: -1000 },
-  { month: '08/25', valorAplicado: 26500, ganhoCapital: 600 },
-  { month: '09/25', valorAplicado: 26800, ganhoCapital: 300 },
-  { month: '10/25', valorAplicado: 26800, ganhoCapital: 200 },
-  { month: '11/25', valorAplicado: 26800, ganhoCapital: 500 },
-  { month: '12/25', valorAplicado: 27000, ganhoCapital: 700 },
-  { month: '01/26', valorAplicado: 27000, ganhoCapital: 1200 },
-  { month: '02/26', valorAplicado: 27000, ganhoCapital: 1000 },
-  { month: '03/26', valorAplicado: 27000, ganhoCapital: 800 },
-  { month: '04/26', valorAplicado: 27000, ganhoCapital: 900 },
-];
+import { useQuery } from "@tanstack/react-query";
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(value);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const entryData = payload[0].payload;
+    const displayLabel = entryData.fullRange || label;
+    const total = payload.reduce((sum: number, entry: any) => sum + entry.value, 0);
     return (
-      <div className="bg-neutral-800 border border-neutral-700 p-3 rounded-md shadow-md text-sm">
-        <p className="font-semibold text-neutral-200 mb-2">{label}</p>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <div className="bg-zinc-900/90 backdrop-blur-sm border border-white/10 p-3 rounded-xl shadow-xl text-sm">
+        <p className="font-semibold text-zinc-100 mb-2">{displayLabel}</p>
         {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="mb-1">
-            {entry.name}: R$ {formatCurrency(entry.value)}
-          </p>
+          <div key={index} className="flex items-center justify-between gap-4 mb-1.5 last:mb-2 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+              <span className="text-zinc-400">{entry.name}</span>
+            </div>
+            <span className="font-bold text-zinc-100 tabular-nums">{formatCurrency(entry.value)}</span>
+          </div>
         ))}
+        <div className="flex items-center justify-between text-xs pt-2 border-t border-white/5">
+          <span className="text-zinc-400 font-medium">Patrimônio Total</span>
+          <span className="font-bold text-emerald-400 tabular-nums">{formatCurrency(total)}</span>
+        </div>
       </div>
     );
   }
   return null;
 };
 
-
 export function EvolutionChart() {
-  const [periodo, setPeriodo] = useState("12_meses");
-  const [tipoAtivo, setTipoAtivo] = useState("todos");
+  const [periodo, setPeriodo] = useState("1y");
+
+  const { data: equityResponse, isLoading } = useQuery({
+    queryKey: ["portfolio-equity"],
+    queryFn: async () => {
+      const res = await fetch("/api/portfolio/equity");
+      return res.json();
+    },
+  });
+
+  const fullData = equityResponse?.data || [];
+
+  // Implementação da lógica de 12 barras fixas
+  const getGroupedData = () => {
+    if (fullData.length === 0) return [];
+    
+    let totalMonths = 12;
+    if (periodo === "1y") totalMonths = 12;
+    else if (periodo === "2y") totalMonths = 24;
+    else if (periodo === "5y") totalMonths = 60;
+    else if (periodo === "max") {
+      totalMonths = fullData.length;
+    }
+
+    // Filtrar os últimos N meses
+    const dataSlice = fullData.slice(-totalMonths);
+    const groupSize = Math.max(1, Math.ceil(dataSlice.length / 12));
+    const grouped = [];
+
+    const monthsLong = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+    for (let i = 0; i < 12; i++) {
+      const startIndex = i * groupSize;
+      const endIndex = Math.min(startIndex + groupSize - 1, dataSlice.length - 1);
+      
+      if (startIndex >= dataSlice.length) break;
+
+      const lastPoint = dataSlice[endIndex];
+      const firstPoint = dataSlice[startIndex];
+
+      // Formatar rótulos
+      const [mEnd, yEnd] = lastPoint.month.split('/');
+      const labelEnd = `${monthsLong[parseInt(mEnd) - 1]}/${yEnd}`;
+      
+      const [mStart, yStart] = firstPoint.month.split('/');
+      const labelStart = `${monthsLong[parseInt(mStart) - 1]}/${yStart}`;
+
+      grouped.push({
+        ...lastPoint,
+        month: labelEnd,
+        fullRange: groupSize > 1 ? `${labelStart} - ${labelEnd}` : labelEnd
+      });
+    }
+
+    return grouped;
+  };
+
+  const chartData = getGroupedData();
 
   return (
-    <Card className="col-span-2 border-neutral-800 bg-neutral-900 text-neutral-100">
+    <Card className="col-span-2 border-white/5 bg-zinc-900/50 backdrop-blur-md text-zinc-100">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl">Evolução do Patrimônio</CardTitle>
-        <div className="flex gap-2">
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
-            className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option value="desde_inicio">Desde o início</option>
-            <option value="12_meses">12 Meses</option>
-            <option value="2_anos">2 Anos</option>
-            <option value="5_anos">5 Anos</option>
-            <option value="10_anos">10 Anos</option>
-          </select>
-
-          <select
-            value={tipoAtivo}
-            onChange={(e) => setTipoAtivo(e.target.value)}
-            className="bg-neutral-800 border border-neutral-700 text-neutral-300 text-sm rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            <option value="todos">Todos os tipos</option>
-            <option value="acoes">Ações</option>
-            <option value="fii">FIIs</option>
-          </select>
+        <div>
+          <CardTitle className="text-xl font-bold tracking-tight">Evolução do Patrimônio</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1">Comparativo entre capital aplicado e valorização</p>
+        </div>
+        <div className="flex bg-zinc-900/60 backdrop-blur-sm rounded-xl p-1 border border-white/5">
+          {["1y", "2y", "5y", "max"].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriodo(p)}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-lg transition-all duration-300 ${
+                periodo === p
+                  ? "bg-zinc-800 text-white shadow-lg ring-1 ring-white/10"
+                  : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+              }`}
+            >
+              {p === "1y" ? "1A" : p === "2y" ? "2A" : p === "5y" ? "5A" : "Máx"}
+            </button>
+          ))}
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={mockData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#3f3f46" />
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                dy={10}
-                angle={-45}
-                textAnchor="end"
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#a1a1aa', fontSize: 12 }}
-                tickFormatter={(value) => formatCurrency(value)}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#27272a' }} />
-              <Legend
-                verticalAlign="top"
-                height={36}
-                iconType="rect"
-                wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }}
-              />
-              <Bar dataKey="valorAplicado" name="Valor aplicado" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="ganhoCapital" name="Ganho de Capital" stackId="a" fill="#6ee7b7" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="h-[320px] w-full mt-6" style={{ position: 'relative' }}>
+          {isLoading ? (
+            <div className="h-full w-full flex items-center justify-center">
+              <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%" id="equity-evolution-container">
+              <BarChart
+                data={chartData}
+                margin={{ top: 0, right: 25, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#71717a', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#71717a', fontSize: 12 }}
+                  tickFormatter={(value) => `R$ ${Math.abs(value) >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
+                  domain={['auto', 'auto']}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                <Legend
+                  verticalAlign="top"
+                  height={48}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }}
+                />
+                <Bar 
+                  dataKey="valorAplicado" 
+                  name="Valor Aplicado" 
+                  stackId="a" 
+                  fill="#10b981" 
+                  radius={[0, 0, 0, 0]} 
+                  opacity={0.8}
+                />
+                <Bar 
+                  dataKey="ganhoCapital" 
+                  name="Ganho de Capital" 
+                  stackId="a" 
+                  fill="#22d3ee" 
+                  radius={[4, 4, 0, 0]} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardContent>
     </Card>

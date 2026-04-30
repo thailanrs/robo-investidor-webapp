@@ -13,7 +13,7 @@ export default function ProventosPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [tickerFilter, setTickerFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState<DividendType | "ALL">("ALL");
-  const [chartPeriod, setChartPeriod] = useState<6 | 12 | 24>(12); // meses
+  const [chartPeriod, setChartPeriod] = useState<string>("1y");
 
   const { data: dividendsResponse, isLoading } = useQuery({
     queryKey: ["dividends", tickerFilter, typeFilter],
@@ -117,19 +117,19 @@ export default function ProventosPage() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-zinc-100">Evolução de Proventos</h2>
           <div className="flex bg-zinc-900/60 backdrop-blur-sm rounded-xl p-1 border border-white/5">
-            {[6, 12, 24].map((m) => (
+            {["1y", "2y", "5y", "max"].map((p) => (
               <button
-                key={m}
-                onClick={() => setChartPeriod(m as 6 | 12 | 24)}
-                className={`px-3 py-1 text-sm rounded-lg transition-colors ${chartPeriod === m ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                key={p}
+                onClick={() => setChartPeriod(p)}
+                className={`px-3 py-1 text-sm rounded-lg transition-colors ${chartPeriod === p ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
-                {m === 12 ? '1A' : m === 24 ? '2A' : '6M'}
+                {p === "1y" ? "1A" : p === "2y" ? "2A" : p === "5y" ? "5A" : "Máx"}
               </button>
             ))}
           </div>
         </div>
         <div className="h-[300px]">
-          <DividendBarChart data={dividends} monthsCount={chartPeriod} />
+          <DividendBarChart data={dividends} period={chartPeriod} />
         </div>
       </div>
 

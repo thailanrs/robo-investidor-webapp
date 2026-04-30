@@ -112,7 +112,7 @@ export function PortfolioPieChart({ positions }: PortfolioPieChartProps) {
         </select>
       </CardHeader>
       <CardContent className="flex items-center justify-center pt-6">
-        <div className="h-[280px] w-full flex">
+        <div className="h-[280px] w-full flex min-w-0">
           <ResponsiveContainer width="60%" height="100%">
             <PieChart>
               <Pie
