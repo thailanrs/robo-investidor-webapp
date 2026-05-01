@@ -5,41 +5,7 @@ export interface BrapiConfig {
   token: string;
 }
 
-export interface BrapiQuote {
-  symbol: string;
-  shortName: string;
-  longName: string;
-  currency: string;
-  regularMarketPrice: number;
-  regularMarketDayHigh: number;
-  regularMarketDayLow: number;
-  regularMarketDayRange: string;
-  regularMarketChange: number;
-  regularMarketChangePercent: number;
-  regularMarketTime: string;
-  marketCap: number;
-  regularMarketVolume: number;
-  regularMarketPreviousClose: number;
-  regularMarketOpen: number;
-  averageDailyVolume10Day: number;
-  averageDailyVolume3Month: number;
-  fiftyTwoWeekLowChange: number;
-  fiftyTwoWeekLowChangePercent: number;
-  fiftyTwoWeekRange: string;
-  fiftyTwoWeekHighChange: number;
-  fiftyTwoWeekHighChangePercent: number;
-  fiftyTwoWeekLow: number;
-  fiftyTwoWeekHigh: number;
-  twoHundredDayAverage: number;
-  twoHundredDayAverageChange: number;
-  twoHundredDayAverageChangePercent: number;
-}
-
-export interface BrapiQuoteResponse {
-  results: BrapiQuote[];
-  requestedAt: string;
-  took: string;
-}
+import { BrapiQuoteResponse } from '@/types/brapi';
 
 class BrapiClient {
   private config: BrapiConfig;
@@ -85,8 +51,8 @@ class BrapiClient {
     return response.json() as Promise<T>;
   }
 
-  public async getQuote(ticker: string): Promise<BrapiQuoteResponse> {
-    return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`);
+  public async getQuote(ticker: string, params?: Record<string, string>): Promise<BrapiQuoteResponse> {
+    return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`, params);
   }
 }
 

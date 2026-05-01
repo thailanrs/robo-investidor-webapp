@@ -1,3 +1,5 @@
+import { getSupabaseKV, setSupabaseKV } from './supabaseKv';
+
 export interface CacheResult<T> {
   data: T;
   stale: boolean;
@@ -12,10 +14,10 @@ interface CacheEntry<T> {
 }
 
 class InMemoryCache {
-  private cache = new Map<string, CacheEntry<any>>();
+  private cache = new Map<string, CacheEntry<unknown>>();
 
   get<T>(key: string): CacheEntry<T> | undefined {
-    return this.cache.get(key);
+    return this.cache.get(key) as CacheEntry<T> | undefined;
   }
 
   set<T>(key: string, value: T, ttlMs: number): void {
@@ -55,16 +57,41 @@ export async function withCache<T>(
     };
   }
 
-  // TODO: Nível 2 - Supabase KV
-  // O Supabase KV lookup iria aqui. Para esta implementação da história baseamos no Map,
-  // e reservamos o espaço para integração real de edge functions no futuro.
+  // Nível 2: Supabase KV lookup
+  try {
+    const kvData = await getSupabaseKV<T>(key);
+    if (kvData) {
+      const expiresAt = new Date(kvData.expires_at).getTime();
+
+      // Hit KV cache (not expired)
+      if (now < expiresAt) {
+        // Popula memCache
+        inMemoryCache.set(key, kvData.value, expiresAt - now);
+
+        return {
+          data: kvData.value,
+          stale: false,
+          cachedAt: new Date(now - (ttlMs - (expiresAt - now))).toISOString(),
+          cache_hit: true,
+        };
+      }
+    }
+  } catch (error) {
+    console.error(`[BRAPI CACHE] Error reading from KV cache for key ${key}:`, error);
+  }
 
   try {
     const data = await fetcher();
+
+    // Nível 1: Set In-Memory cache
     inMemoryCache.set(key, data, ttlMs);
 
-    // Set KV
-    // await setSupabaseKV(key, data, ttlMs);
+    // Nível 2: Set Supabase KV cache
+    try {
+      await setSupabaseKV(key, data, ttlMs);
+    } catch (error) {
+      console.error(`[BRAPI CACHE] Error writing to KV cache for key ${key}:`, error);
+    }
 
     return {
       data,
@@ -83,9 +110,20 @@ export async function withCache<T>(
       };
     }
 
-    // Todo: Falhou em buscar, procurar em Supabase KV como ultimo fallback (stale)
-    // const kvData = await getSupabaseKV(key);
-    // if (kvData) { ... }
+    // Falhou em buscar, procurar em Supabase KV como ultimo fallback (stale)
+    try {
+      const kvData = await getSupabaseKV<T>(key);
+      if (kvData) {
+        return {
+          data: kvData.value,
+          stale: true,
+          cachedAt: new Date().toISOString(),
+          cache_hit: true,
+        };
+      }
+    } catch (kvError) {
+      console.error(`[BRAPI CACHE] Error reading stale data from KV cache for key ${key}:`, kvError);
+    }
 
     throw error;
   }
