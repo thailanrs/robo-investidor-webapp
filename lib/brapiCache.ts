@@ -17,7 +17,7 @@ class InMemoryCache {
   private cache = new Map<string, CacheEntry<unknown>>();
 
   get<T>(key: string): CacheEntry<T> | undefined {
-    return this.cache.get(key);
+    return this.cache.get(key) as CacheEntry<T> | undefined;
   }
 
   set<T>(key: string, value: T, ttlMs: number): void {
@@ -71,7 +71,7 @@ export async function withCache<T>(
         return {
           data: kvData.value,
           stale: false,
-          cachedAt: new Date(now - (ttlMs - (expiresAt - now))).toISOString(), // Approximate cachedAt
+          cachedAt: new Date(now - (ttlMs - (expiresAt - now))).toISOString(),
           cache_hit: true,
         };
       }
@@ -90,7 +90,7 @@ export async function withCache<T>(
     try {
       await setSupabaseKV(key, data, ttlMs);
     } catch (error) {
-       console.error(`[BRAPI CACHE] Error writing to KV cache for key ${key}:`, error);
+      console.error(`[BRAPI CACHE] Error writing to KV cache for key ${key}:`, error);
     }
 
     return {
@@ -117,7 +117,7 @@ export async function withCache<T>(
         return {
           data: kvData.value,
           stale: true,
-          cachedAt: new Date().toISOString(), // approximated
+          cachedAt: new Date().toISOString(),
           cache_hit: true,
         };
       }
