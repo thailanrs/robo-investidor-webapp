@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { brapiClient } from '@/lib/brapi';
-import { getCached } from '@/lib/brapiCache';
+import { withCache } from '@/lib/brapiCache';
 import { logBrapiRequest } from '@/lib/brapiLogger';
 import { handleBrapiError } from '@/lib/brapiErrors';
 import { FundamentalsData } from '@/types/brapi';
@@ -17,7 +17,7 @@ export async function GET(
   let isStale = false;
 
   try {
-    const result = await getCached(
+    const result = await withCache(
       `fundamentals:${tickerUpper}`,
       () => brapiClient.getFundamentals(tickerUpper),
       24 * 60 * 60 * 1000 // 24 hours TTL

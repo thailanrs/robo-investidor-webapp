@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { brapiClient } from '@/lib/brapi';
-import { getCached } from '@/lib/brapiCache';
+import { withCache } from '@/lib/brapiCache';
 import { logBrapiRequest } from '@/lib/brapiLogger';
 import { handleBrapiError } from '@/lib/brapiErrors';
 import { CurrencyRate, MacroPrimeRate } from '@/types/brapi';
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   let isStale = false;
 
   try {
-    const result = await getCached(
+    const result = await withCache(
       `macro:overview`,
       async () => {
         const [currencyRes, primeRatesRes] = await Promise.all([

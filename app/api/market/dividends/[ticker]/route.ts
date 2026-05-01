@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { brapiClient } from '@/lib/brapi';
-import { getCached } from '@/lib/brapiCache';
+import { withCache } from '@/lib/brapiCache';
 import { logBrapiRequest } from '@/lib/brapiLogger';
 import { handleBrapiError } from '@/lib/brapiErrors';
 import { DividendRecord } from '@/types/brapi';
@@ -17,7 +17,7 @@ export async function GET(
   let isStale = false;
 
   try {
-    const result = await getCached(
+    const result = await withCache(
       `dividends:${tickerUpper}`,
       () => brapiClient.getDividends(tickerUpper),
       12 * 60 * 60 * 1000 // 12 hours TTL
