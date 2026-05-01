@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 export class BrapiError extends Error {
   public statusCode?: number;
   public ticker?: string;
@@ -72,47 +70,4 @@ export function parseBrapiError(response: Response, ticker?: string, endpoint?: 
 
 export function isBrapiError(err: unknown): err is BrapiError {
   return err instanceof BrapiError;
-}
-
-export function handleBrapiError(error: unknown, ticker?: string): NextResponse {
-  if (error instanceof RateLimitError) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded', retryAfter: error.retryAfter, ticker },
-      { status: 429 }
-    );
-  }
-
-  if (error instanceof AuthenticationError) {
-    return NextResponse.json(
-      { error: 'Authentication failed' },
-      { status: 401 }
-    );
-  }
-
-  if (error instanceof NotFoundError) {
-    return NextResponse.json(
-      { error: 'Asset not found', ticker },
-      { status: 404 }
-    );
-  }
-
-  if (error instanceof BrapiUnavailableError) {
-    return NextResponse.json(
-      { error: 'Brapi service unavailable' },
-      { status: 503 }
-    );
-  }
-
-  if (error instanceof BrapiError) {
-    return NextResponse.json(
-      { error: error.message, ticker },
-      { status: error.statusCode ?? 500 }
-    );
-  }
-
-  console.error('[BRAPI] Unexpected error:', error);
-  return NextResponse.json(
-    { error: 'Internal server error' },
-    { status: 500 }
-  );
 }

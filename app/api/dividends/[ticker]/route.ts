@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { brapiClient } from '@/lib/brapi';
-import { withCache } from '@/lib/brapiCache';
+import { getCached } from '@/lib/brapiCache';
 import { logBrapiRequest } from '@/lib/brapiLogger';
-import { handleBrapiError } from '@/lib/brapiErrors';
+import { handleBrapiError } from '@/lib/brapiResponseHelpers';
 import { DividendRecord } from '@/types/brapi';
 
 export async function GET(
@@ -17,7 +17,7 @@ export async function GET(
   let isStale = false;
 
   try {
-    const result = await withCache(
+    const result = await getCached(
       `dividends:${tickerUpper}`,
       () => brapiClient.getDividends(tickerUpper),
       12 * 60 * 60 * 1000 // 12 hours TTL
@@ -38,6 +38,7 @@ export async function GET(
       lastDatePrior: d.lastDatePrior || ''
     }));
 
+    // Log success
     const latency_ms = Date.now() - startTime;
     logBrapiRequest({
       ticker: tickerUpper,
@@ -56,7 +57,7 @@ export async function GET(
 
   } catch (error: unknown) {
     const latency_ms = Date.now() - startTime;
-    const tickerParam = tickerUpper || undefined;
+    const tickerParam = typeof tickerUpper !== 'undefined' ? tickerUpper : undefined;
 
     logBrapiRequest({
       ticker: tickerParam,
