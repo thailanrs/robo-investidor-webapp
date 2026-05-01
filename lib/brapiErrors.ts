@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 export class BrapiError extends Error {
   public statusCode?: number;
   public ticker?: string;
@@ -70,4 +72,19 @@ export function parseBrapiError(response: Response, ticker?: string, endpoint?: 
 
 export function isBrapiError(err: unknown): err is BrapiError {
   return err instanceof BrapiError;
+}
+
+export function handleBrapiError(error: unknown, ticker?: string) {
+  if (isBrapiError(error)) {
+    return NextResponse.json(
+      { error: error.message, code: error.name, ticker },
+      { status: error.statusCode || 500 }
+    );
+  }
+
+  console.error('[BRAPI] Unexpected error:', error);
+  return NextResponse.json(
+    { error: 'Internal Server Error', ticker },
+    { status: 500 }
+  );
 }

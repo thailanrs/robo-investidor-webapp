@@ -54,6 +54,10 @@ class BrapiClient {
   public async getQuote(ticker: string, params?: Record<string, string>): Promise<BrapiQuoteResponse> {
     return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`, params);
   }
+
+  public async getQuoteList(params?: Record<string, string>): Promise<{ stocks: import('@/types/brapi').AssetListItem[] }> {
+    return this.fetch<{ stocks: import('@/types/brapi').AssetListItem[] }>('/quote/list', params);
+  }
 }
 
 export const brapiClient = new BrapiClient();
