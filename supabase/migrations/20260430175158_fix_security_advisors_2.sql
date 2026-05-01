@@ -7,4 +7,9 @@ BEGIN
 END $$;
 
 -- Fix search path mutable warning
-ALTER FUNCTION public.handle_new_user() SET search_path = public;
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_proc WHERE proname = 'handle_new_user') THEN
+    EXECUTE 'ALTER FUNCTION public.handle_new_user() SET search_path = public;';
+  END IF;
+END $$;
