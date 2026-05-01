@@ -54,6 +54,22 @@ class BrapiClient {
   public async getQuote(ticker: string, params?: Record<string, string>): Promise<BrapiQuoteResponse> {
     return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`, params);
   }
+
+  public async getDividends(ticker: string): Promise<any> {
+    return this.fetch<any>(`/quote/${ticker}`, { dividends: 'true' });
+  }
+
+  public async getFundamentals(ticker: string): Promise<any> {
+    return this.fetch<any>(`/quote/${ticker}`, { fundamental: 'true' });
+  }
+
+  public async getCurrencies(currencies: string): Promise<any> {
+    return this.fetch<any>(`/v2/currency`, { currency: currencies });
+  }
+
+  public async getPrimeRates(country: string): Promise<any> {
+    return this.fetch<any>(`/v2/prime-rate`, { country });
+  }
 }
 
 export const brapiClient = new BrapiClient();
