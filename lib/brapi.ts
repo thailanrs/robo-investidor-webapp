@@ -1,11 +1,10 @@
 import { parseBrapiError } from './brapiErrors';
+import { BrapiQuoteResponse, AssetListItem } from '@/types/brapi';
 
 export interface BrapiConfig {
   baseURL: string;
   token: string;
 }
-
-import { BrapiQuoteResponse } from '@/types/brapi';
 
 class BrapiClient {
   private config: BrapiConfig;
@@ -53,6 +52,10 @@ class BrapiClient {
 
   public async getQuote(ticker: string, params?: Record<string, string>): Promise<BrapiQuoteResponse> {
     return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`, params);
+  }
+
+  public async getQuoteList(params?: Record<string, string>): Promise<{ stocks: AssetListItem[] }> {
+    return this.fetch<{ stocks: AssetListItem[] }>('/quote/list', params);
   }
 
   public async getDividends(ticker: string): Promise<any> {

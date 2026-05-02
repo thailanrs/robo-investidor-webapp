@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { brapiClient } from '@/lib/brapi';
-import { getCached } from '@/lib/brapiCache';
+import { withCache as getCached } from '@/lib/brapiCache';
 import { logBrapiRequest } from '@/lib/brapiLogger';
 import { handleBrapiError } from '@/lib/brapiResponseHelpers';
 import { FundamentalsData } from '@/types/brapi';
