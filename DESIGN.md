@@ -1,289 +1,156 @@
----
-design-tokens:
-  colors:
-    brand:
-      primary:
-        name: Emerald
-        value: oklch(0.643 0.153 164.607) # emerald-500
-        description: Cor principal para identidade estrutural e indicadores de sucesso.
-      accent:
-        name: Indigo
-        value: oklch(0.585 0.176 273.284) # indigo-500
-        description: Cor de destaque para ações principais e badges de ativos.
-      tech:
-        name: Cyan
-        value: oklch(0.723 0.16 232.661) # cyan-500
-        description: Cor secundária para gradientes de IA e elementos de tecnologia.
-    neutral:
-      background:
-        light: oklch(1 0 0)
-        dark: oklch(0.145 0 0)
-      foreground:
-        light: oklch(0.145 0 0)
-        dark: oklch(0.985 0 0)
-      surface:
-        light: oklch(1 0 0)
-        dark: oklch(0.205 0 0)
-      border:
-        light: oklch(0.922 0 0)
-        dark: oklch(1 0 0 / 10%)
-    semantic:
-      success: oklch(0.643 0.153 164.607)
-      error: oklch(0.577 0.245 27.325)
-      warning: oklch(0.769 0.188 70.08)
-  typography:
-    fonts:
-      sans: "Geist, ui-sans-serif, system-ui, sans-serif"
-      mono: "Geist Mono, ui-monospace, SFMono-Regular, monospace"
-    weights:
-      normal: 400
-      medium: 500
-      semibold: 600
-      bold: 700
-      extrabold: 800
-    sizes:
-      xs: 0.75rem
-      sm: 0.875rem
-      base: 1rem
-      lg: 1.125rem
-      xl: 1.25rem
-      2xl: 1.5rem
-      3xl: 1.875rem
-      4xl: 2.25rem
-      5xl: 3rem
-  spacing:
-    scale:
-      0: 0
-      1: 0.25rem
-      2: 0.5rem
-      3: 0.75rem
-      4: 1rem
-      6: 1.5rem
-      8: 2rem
-      12: 3rem
-      16: 4rem
-  radii:
-    base: 0.625rem
-    sm: 0.375rem
-    md: 0.5rem
-    lg: 0.625rem
-    xl: 0.875rem
-    "2xl": 1.125rem
-    full: 9999px
-  elevation:
-    shadows:
-      sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)"
-      md: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)"
-      xl: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
-      brand: "0 10px 15px -3px rgba(99, 102, 241, 0.2)"
-      neon-emerald: "0 0 12px rgba(16, 185, 129, 0.35)"
-      neon-cyan: "0 0 12px rgba(6, 182, 212, 0.35)"
-      neon-indigo: "0 0 12px rgba(99, 102, 241, 0.35)"
-  motion:
-    duration:
-      fast: 150ms
-      normal: 300ms
-      slow: 700ms
-    easing:
-      standard: cubic-bezier(0.4, 0, 0.2, 1)
-      ease-in-out: ease-in-out
----
+# Design & UI Patterns
+_Última atualização: 2026-05-01_
 
-# Design System: Robô Investidor
+## Visão Geral do Design System
 
-Este documento descreve a identidade visual e as decisões de design do **Robô Investidor**. O sistema foi projetado para transmitir confiança, precisão e modernidade, características essenciais para uma ferramenta de análise financeira quantitativa.
+O Robô Investidor utiliza um design system baseado em **Dark Mode nativo** com acentos neon, construído sobre Tailwind CSS e Shadcn UI. O padrão visual prioriza densidade de informação, legibilidade em telas de dados financeiros e feedback visual imediato.
 
-## Visão Geral Estética
+## Paleta de Cores
 
-A estética do Robô Investidor é definida como **"Cyber-Financial Premium"**. Ela combina uma base profunda em Dark Mode (Zinc-950/900) com elementos de **glassmorphism**, gradientes neon e tipografia de alto impacto. O objetivo é que o sistema pareça um produto de nível institucional — algo que um trader profissional usaria — mas com a fluidez e leveza de uma fintech moderna.
-
-A referência visual de nível premium é: painéis de trading de alto desempenho como Bloomberg Terminal, mas com a modernidade de interfaces como Linear, Vercel e plataformas SaaS de nova geração.
-
----
-
-## 1. Paleta de Cores e Hierarquia
-
-O sistema opera exclusivamente em **Modo Escuro (Dark Mode)**, usando a escala OKLCH para garantir percepção de brilho uniforme.
-
-- **Emerald (Sucesso/Crescimento):** Rentabilidade positiva, indicadores ativos, logotipo, linhas de gráficos "Minha Carteira".
-- **Indigo (Ação/Foco):** CTAs primários, tickers de ativos, linha de gráfico "Carteira Ideal".
-- **Cyan (Tecnologia/IA):** Gradientes de IA, badge de nível do usuário, glow de elementos tech. Linha de gráfico CDI.
-- **Vermelho/Rose:** Rentabilidade negativa, alertas críticos.
-- **Zinc (Neutros):** Toda a infraestrutura visual — backgrounds, superfícies, bordas.
-
-### Gradientes Chave
-```
--- Badge Premium: linear-gradient(135deg, #06b6d4, #10b981)  (Cyan → Emerald)
--- IA/Tech elements: linear-gradient(135deg, #6366f1, #06b6d4) (Indigo → Cyan)
--- Linha Carteira Ideal (gráfico): stroke com indigo-500 + glow indigo
--- Linha CDI (gráfico): stroke com cyan-400 + glow cyan
--- Linha Minha Carteira (gráfico): stroke com emerald-500 + glow emerald
-```
-
----
-
-## 2. Tipografia
-
-Família exclusiva: **Geist** (Vercel). Nunca misturar com outras fontes.
-
-| Elemento | Fonte | Peso | Modificadores |
-|---|---|---|---|
-| Títulos de página | Geist Sans | `extrabold` (800) | `tracking-tight` |
-| Subtítulos de seção | Geist Sans | `semibold` (600) | — |
-| Labels e metadados técnicos | Geist Mono | `medium` (500) | `tracking-wider`, `uppercase` |
-| Valores numéricos críticos (patrimônio, %) | Geist Sans | `bold` (700) | `tabular-nums`, `font-variant-numeric: tabular-nums` |
-| Corpo e descrições | Geist Sans | `normal` (400) | `text-zinc-400` |
-| Badge de nível ("PREMIUM ELITE") | Geist Sans | `semibold` (600) | `uppercase`, `tracking-widest`, tamanho `xs` |
-
-> ⚠️ **Regra de ouro:** Valores financeiros (preços, percentuais, quantidades) DEVEM usar `tabular-nums` para evitar "dança" de números em atualizações em tempo real.
-
----
-
-## 3. Superfícies, Profundidade e Glassmorphism
-
-### Hierarquia de Camadas
-```
-Zinc-950  → Background global (página)
-Zinc-900  → Cards padrão
-Zinc-800  → Cards aninhados, dropdowns, tooltips
-Zinc-700  → Borders ativas, separadores
-```
-
-### Glassmorphism (Obrigatório em novos componentes de Input, Header e Modais)
-O glassmorphism é o padrão visual para **todos os elementos interativos e de entrada** do sistema. Ele cria profundidade e sofisticação sem pesar a interface.
-
-**Receita padrão:**
-```css
-background: rgba(24, 24, 27, 0.6);   /* zinc-900 com 60% opacidade */
-backdrop-filter: blur(12px);
--webkit-backdrop-filter: blur(12px);
-border: 1px solid rgba(255, 255, 255, 0.08);
-border-radius: 0.75rem;
-```
-
-**Aplicação em Tailwind:**
-```
-bg-zinc-900/60 backdrop-blur-md border border-white/8 rounded-xl
-```
-
-### Componentes que DEVEM usar Glassmorphism
-- `<SearchBar />` (barra de pesquisa do header)
-- `<Select />` e `<Input />` em todo o sistema
-- Modais e Dialogs
-- Dropdowns de usuário
-- Tooltips de gráficos
-- Cards de destaque no Dashboard
-
----
-
-## 4. Header Redesign — Especificação Completa
-
-O Header é a identidade visual mais imediata do produto. Deve transmitir **poder e controle** ao usuário.
-
-### Layout do Header
-```
-[Logo/Sidebar Toggle] ---- [SearchBar Centralizada] ---- [Sino | Engrenagem | UserBadge]
-```
-
-### Barra de Pesquisa
-- **Posição:** Centralizada no header, largura máxima de `max-w-md`.
-- **Estilo:** Glassmorphism (bg-zinc-900/60 backdrop-blur-md), ícone de lupa à esquerda, atalho `⌘K` exibido à direita como badge `kbd`.
-- **Placeholder:** `"Buscar ativos, relatórios ou robôs..."`
-- **Comportamento:** Ao focar (`focus`), a borda acende com `ring-1 ring-emerald-500/50` e um leve glow.
-- **Atalho:** Ao pressionar `Cmd+K` ou `Ctrl+K`, o input recebe foco automaticamente.
-
-### Ícones de Ação (Notificação e Configurações)
-- **Componentes:** `<Bell />` e `<Settings />` do Lucide React.
-- **Tamanho:** `h-5 w-5`, cor `text-zinc-400`.
-- **Hover:** fundo circular `hover:bg-white/5 rounded-full p-2`, ícone muda para `text-zinc-100`.
-- **Badge de notificação:** Um ponto emerald `bg-emerald-500` de 6px posicionado em `top-0 right-0` do sino quando há notificações pendentes.
-- **Transição:** `transition-all duration-150`.
-
-### Badge de Nível do Usuário (UserBadge)
-Este é o elemento de maior impacto premium do header. Inspira-se em sistemas de gamificação de plataformas financeiras profissionais.
-
-**Estrutura do componente `<UserBadge />`:**
-```
-[Avatar circular] [nome_completo (bold)] [badge PREMIUM ELITE]
-```
-
-- **Avatar:** `h-8 w-8`, circular, com borda `ring-1 ring-emerald-500/40`.
-- **Nome:** `text-sm font-semibold text-zinc-100`.
-- **Badge:** Texto `PREMIUM ELITE`, fundo com gradiente `from-cyan-500 to-emerald-500`, texto branco, `text-xs font-semibold tracking-widest uppercase`, border-radius `rounded-full`, padding `px-2 py-0.5`.
-- **Localização no banco:** O campo `nivel` deve ser adicionado na tabela `profiles` (VARCHAR, default: `'PREMIUM ELITE'`). Futuramente pode evoluir para um sistema de níveis (STARTER → PRO → PREMIUM ELITE → INSTITUTIONAL).
-- **Dados:** Virão do `useUser()` (Context), nunca chamando Supabase diretamente no client.
-
----
-
-## 5. Componentes de Input & Select — Padrão Glassmorphism
-
-Todos os `<Input />`, `<Select />`, `<Textarea />` e `<Combobox />` do sistema devem adotar o seguinte padrão visual.
-
-### Padrão de Select
-```
-bg-zinc-900/60 backdrop-blur-md
-border border-white/8
-rounded-xl
-text-zinc-100 placeholder:text-zinc-500
-focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/30
-transition-all duration-150
-```
-
-### Estados
-- **Default:** borda `border-white/8`
-- **Hover:** borda `border-white/15`
-- **Focus:** ring emerald sutil + borda levemente mais brilhante
-- **Error:** borda `border-red-500/50` + texto auxiliar `text-red-400`
-- **Disabled:** `opacity-50 cursor-not-allowed`
-
----
-
-## 6. Gráficos — Especificação Visual
-
-Todos os gráficos usam **Recharts** com o tema Dark Mode Neon. Nenhum gráfico deve ter fundo branco ou cores pastéis.
-
-### Paleta de Séries Temporais (Comparativo de Performance)
-| Série | Cor | Efeito |
+| Token | Uso | Exemplo |
 |---|---|---|
-| Minha Carteira | `emerald-500` (#10b981) | `drop-shadow: 0 0 8px rgba(16,185,129,0.4)` |
-| Carteira Ideal | `indigo-400` (#818cf8) | `drop-shadow: 0 0 8px rgba(129,140,248,0.4)` |
-| CDI | `cyan-400` (#22d3ee) | `drop-shadow: 0 0 8px rgba(34,211,238,0.4)` |
+| Verde neon (`#00FF87`, `#10B981`) | Alta, lucro, positivo | Variação % positiva, saldo positivo |
+| Vermelho (`#EF4444`, `#FF4757`) | Baixa, perda, negativo | Variação % negativa, stop loss |
+| Azul (`#3B82F6`) | Neutro, informação | Links, badges informativos |
+| Cinza escuro (`#1a1a2e`, `#16213e`) | Superfícies, backgrounds | Cards, Sidebar, Header |
+| Branco/Cinza claro | Texto primário/secundário | Conteúdo, labels |
 
-### Padrão de Área (AreaChart)
-- Usar `<AreaChart>` com `<defs>` para gradientes verticais.
-- Cada série: `fillOpacity` de `0.15` na base, `0.4` no topo.
-- Grid: `stroke="rgba(255,255,255,0.05)"`, sem bordas externas.
-- Tooltip: glassmorphism (`bg-zinc-900/90 backdrop-blur-sm border border-white/10`), valores formatados em BRL.
-- Eixo X: datas formatadas (`Geist Mono`, `text-zinc-500`, `text-xs`).
-- Eixo Y: valores em K/M para compactar (ex: `R$ 25K`, `R$ 1,2M`).
+## Tipografia
 
-### Filtros de Período
-Os botões de filtro de tempo (1A, 2A, 5A, Máx) devem ter o estilo de **Tab Pills**:
-- Inativo: `bg-transparent text-zinc-500 hover:text-zinc-300`
-- Ativo: `bg-zinc-800 text-zinc-100 rounded-lg`
-- Container: `bg-zinc-900/60 backdrop-blur-sm rounded-xl p-1`
+* **Font Principal:** Inter (sistema) — legibilidade em tabelas e dados
+* **Números financeiros:** `font-mono` (tabular-nums) — alinhamento em colunas
+* **Hierarquia:** `text-2xl font-bold` (KPIs), `text-lg font-semibold` (seções), `text-sm` (labels), `text-xs text-muted-foreground` (metadados)
 
----
+## Padrões de Componentes
 
-## 7. Movimento e Interatividade
+### Cards de KPI
+```tsx
+<Card className="bg-card border-border">
+  <CardHeader className="pb-2">
+    <CardTitle className="text-sm font-medium text-muted-foreground">Label</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="text-2xl font-bold text-green-400">R$ 12.450,00</div>
+    <p className="text-xs text-muted-foreground">+2.3% hoje</p>
+  </CardContent>
+</Card>
+```
 
-- **Transições Suaves:** Colapsar/Expandir sidebar usa 300ms `ease-in-out`.
-- **Micro-interações:** Botões e nav items com `active:scale-95` e cor de hover.
-- **Animações de Entrada:** Cards e tabelas com `animate-in fade-in slide-in-from-bottom-4 duration-300`.
-- **Glow on Hover:** Elementos com cores neon (badges, CTAs) ganham um `box-shadow` de glow ao hover.
+### Variação Percentual (obrigatório em dados de mercado)
+```tsx
+const VariacaoPercent = ({ value }: { value: number }) => (
+  <span className={cn(
+    "font-mono text-sm font-medium",
+    value >= 0 ? "text-green-400" : "text-red-400"
+  )}>
+    {value >= 0 ? "+" : ""}{value.toFixed(2)}%
+  </span>
+)
+```
 
----
+### Tabelas de Dados Financeiros
+* Usar `font-mono` para colunas numéricas (preço, quantidade, variação)
+* Linhas alternadas: `hover:bg-muted/50`
+* Sticky header em tabelas longas
+* Ordenação por coluna (ícone de sort no header)
 
-## 8. Iconografia
+### Skeleton Loading (obrigatório)
+```tsx
+// Sempre implementar skeleton que espelha o layout real do componente
+<Skeleton className="h-8 w-24" />  // número/KPI
+<Skeleton className="h-4 w-full" /> // linha de texto
+<Skeleton className="h-[200px] w-full" /> // gráfico
+```
 
-Biblioteca exclusiva: **Lucide React**. Stroke width padrão: `2`. Nunca usar ícones filled.
+### Indicador de Dado Stale (brapi)
+```tsx
+// Exibir quando isStale === true nos hooks brapi
+<span className="text-xs text-yellow-500/70 flex items-center gap-1">
+  <span>⚡</span>
+  <span>dados de {minutesAgo}min atrás</span>
+</span>
+```
 
-- Dashboard → `LayoutDashboard`
-- Carteira → `Briefcase`
-- Lançamentos → `Receipt`
-- Proventos → `Coins`
-- Histórico → `History`
-- Configurações → `Settings`
-- Notificações → `Bell`
-- IA/Análise → `BrainCircuit`
-- Busca → `Search`
+## Gráficos (Recharts)
+
+* **Biblioteca:** Recharts (padrão) ou Chart.js para casos específicos
+* **Background:** `transparent` (herdado do card)
+* **Grid:** `stroke="#374151"` (cinza escuro sutil)
+* **Tooltip:** dark custom com `bg-gray-900 border-gray-700`
+* **Cores de linha:** verde neon para performance positiva, vermelho para negativa, azul para referência (Ibovespa)
+* **Responsividade:** `<ResponsiveContainer width="100%" height={200}>`
+
+### Padrão de Gráfico de Evolução
+```tsx
+<ResponsiveContainer width="100%" height={200}>
+  <LineChart data={data}>
+    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+    <XAxis dataKey="date" stroke="#6B7280" tick={{ fontSize: 11 }} />
+    <YAxis stroke="#6B7280" tick={{ fontSize: 11 }} tickFormatter={formatCurrency} />
+    <Tooltip content={<CustomTooltip />} />
+    <Line type="monotone" dataKey="value" stroke="#10B981" strokeWidth={2} dot={false} />
+  </LineChart>
+</ResponsiveContainer>
+```
+
+## Layout e Navegação
+
+### Sidebar
+* Colapsável: ícone-only (64px) ↔ ícone+texto (240px)
+* Transição: `transition-all duration-300`
+* Estado persistido via Context (`AppLayoutClient`)
+* Mobile: overlay com backdrop
+
+### Header
+* Top bar fixa (`sticky top-0 z-50`)
+* Contém: botão de menu mobile, título da página, `UserDropdown`
+* `MacroWidget` (USD/BRL, EUR/BRL, SELIC) planejado para o lado direito (ROB-58)
+
+### Páginas Protegidas
+Todas as páginas em `app/(app)/` seguem o padrão:
+1. **Loading state:** Skeleton que espelha o layout real (nunca spinner genérico)
+2. **Error state:** Mensagem contextual + botão de retry
+3. **Empty state:** Mensagem amigável + CTA para primeira ação
+
+## Componentes de Mercado (próxima fase — Service Layer)
+
+Componentes que serão criados durante a integração das API Routes brapi à UI:
+
+| Componente | Consome | Localização | Descrição |
+|---|---|---|---|
+| `<AssetSearchInput>` | `/api/assets/search` | `components/ui/AssetSearchInput.tsx` | Autocomplete com debounce 300ms para seleção de ativo. Exibir ticker + nome. |
+| `<PriceChart>` | `/api/history/[ticker]` | `components/charts/PriceChart.tsx` | Gráfico OHLCV com range selector (1M / 3M / 6M / 1A / MAX). Recharts `CandlestickChart` ou `LineChart`. |
+| `<DividendTimeline>` | `/api/dividends/[ticker]` | `components/dividends/DividendTimeline.tsx` | Timeline de proventos com badge "sugerido" para dividendos não lançados (via `dividendMatcher`). |
+| `<FundamentalsPanel>` | `/api/fundamentals/[ticker]` | `components/fundamentals/FundamentalsPanel.tsx` | Grid com P/L, P/VP, DY, consenso de analistas (targetMeanPrice, recommendationKey). |
+| `<MacroWidget>` | `/api/macro` | `components/layout/MacroWidget.tsx` | Barra no Header: USD/BRL, EUR/BRL, SELIC. Atualização a cada 1h. |
+| `<QuoteBadge>` | `/api/quotes` | `components/ui/QuoteBadge.tsx` | Preço atual + variação % colorida. Polling a cada 5min. |
+
+### Estados obrigatórios para todos os componentes de mercado
+
+Todo componente que consome dados brapi **deve** implementar os 4 estados:
+
+```tsx
+// 1. Loading — skeleton que espelha o layout real
+if (isLoading) return <ComponentSkeleton />
+
+// 2. Error — inline com retry
+if (error) return (
+  <ErrorState message="Erro ao carregar dados" onRetry={refetch} />
+)
+
+// 3. Empty — com ação clara
+if (!data || data.length === 0) return (
+  <EmptyState message="Nenhum dado disponível" />
+)
+
+// 4. Stale — badge sutil no canto
+{isStale && <StaleBadge />}
+```
+
+## Acessibilidade e UX
+
+* **Foco visível:** `focus-visible:ring-2 focus-visible:ring-ring` em todos os interativos
+* **ARIA labels:** obrigatório em botões ícone-only e charts
+* **Contraste:** mínimo WCAG AA — texto principal vs. fundo dark
+* **Touch targets:** mínimo 44×44px em mobile
+* **Animações:** respeitar `prefers-reduced-motion`

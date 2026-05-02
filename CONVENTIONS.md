@@ -43,4 +43,97 @@ Exemplo: `20260429120000_create_dividends.sql`
 - [ ] Confirmar no PR que a migration foi aplicada em produção
 
 10. **TypeScript Strict:** Sempre tratar casos de `null` em callbacks de componentes Radix UI (ex: `onValueChange` do `<Select>`). O tipo do handler deve aceitar `null` ou filtrar com guard `if (v !== null)`.
-11. **APIs Externas e Scraping (CRÍTICO):** Toda chamada a fontes externas com risco de bloqueio por IP de datacenter (Fundamentus, B3, etc.) deve passar OBRIGATORIAMENTE pela camada de Edge Functions do Supabase. Nunca realize scraping ou fetch direto para essas fontes a partir da API Routes da Vercel (`app/api/*`). A Vercel (AWS) frequentemente tem seus IPs bloqueados por WAFs como Cloudflare.
+11. **APIs Externas e Scraping (CRÍTICO):** Toda chamada a fontes externas com risco de bloqueio por IP de datacenter (Fundamentus, B3, etc.) deve passar OBRIGATORIAMENTE pela camada de Edge Functions do Supabase. Nunca realize scraping ou fetch direto para essas fontes a partir da API Routes da Vercel (`app/api/*`).
+
+---
+
+## 🌐 Convenções da Camada Brapi (CRÍTICO)
+_Adicionado em 2026-05-01_
+
+### Padrão de API Route
+
+Toda route que consome a brapi segue este contrato obrigatório:
+
+```typescript
+import { getCached } from '@/lib/brapiCache'
+import { handleBrapiError } from '@/lib/brapiErrors'
+import { logBrapiRequest } from '@/lib/brapiLogger'
+import { brapiClient } from '@/lib/brapiClient'
+
+export async function GET(req: Request) {
+  try {
+    // 1. Extrair params
+    const { searchParams } = new URL(req.url)
+    const ticker = searchParams.get('ticker') ?? ''
+
+    // 2. Montar cacheKey (incluir TODOS os params variáveis)
+    const cacheKey = `resource:${ticker}:${param1}:${param2}`
+
+    // 3. Registrar início
+    const start = Date.now()
+
+    // 4. Buscar com cache
+    const { data, stale } = await getCached(cacheKey, () => brapiClient.method(), TTL_MS)
+
+    // 5. Logar
+    await logBrapiRequest({
+      endpoint: '/api/resource',
+      ticker,
+      latencyMs: Date.now() - start,
+      cacheHit: !stale,
+      stale
+    })
+
+    // 6. Responder
+    return NextResponse.json({ ...data, stale })
+
+  } catch (error) {
+    // 7. Catch sempre via handleBrapiError
+    return handleBrapiError(error, ticker)
+  }
+}
+```
+
+### Regras de Tipagem (`types/brapi.ts`)
+
+* **Sempre fazer APPEND** ao final do arquivo — nunca sobrescrever interfaces existentes
+* Campos ausentes na resposta brapi retornam `null`, nunca `undefined` ou `NaN`
+* Timestamps Unix (segundos) → converter para `string 'YYYY-MM-DD'` antes de retornar
+* Interfaces exportadas: `QuoteResult`, `AssetListItem`, `OHLCVDataPoint`, `HistoryResponse`, `DividendRecord`, `FundamentalsData`, `CurrencyRate`, `MacroPrimeRate`, `MacroOverview`
+
+### TTLs Padrão por Tipo de Dado
+
+| Tipo de Dado | TTL | Constante |
+|---|---|---|
+| Cotações em tempo real | 5 min | `BRAPI_TTL_QUOTES` |
+| Câmbio + Macro | 1h | `BRAPI_TTL_MACRO` |
+| Histórico OHLCV | 1h | `BRAPI_TTL_HISTORY` |
+| Dividendos e JCP | 12h | `BRAPI_TTL_DIVIDENDS` |
+| Dados fundamentalistas | 24h | `BRAPI_TTL_FUNDAMENTALS` |
+| Lista de ativos | 24h | `BRAPI_TTL_ASSETS` |
+
+### Convenção de Hooks React Query (próxima fase)
+
+Hooks que consomem as API Routes brapi seguem o padrão:
+* **Localização:** `hooks/brapi/use{Resource}.ts`
+* **Nomes:** `useQuotes`, `useHistory`, `useDividends`, `useFundamentals`, `useMacro`, `useAssetSearch`
+* **Interface de retorno obrigatória:**
+  ```typescript
+  {
+    data: T | undefined
+    isLoading: boolean
+    isStale: boolean       // reflete o campo stale da API
+    error: Error | null
+    refetch: () => void
+  }
+  ```
+* **staleTime React Query:** deve ser ligeiramente menor que o TTL do cache da API (ex: cotações → `staleTime: 4 * 60 * 1000`)
+* **Nunca** chamar `brapiClient` diretamente de hooks ou componentes — sempre via fetch para a API Route
+
+### Exibição de Dados Stale na UI
+
+Todo componente que exibe dados brapi deve:
+1. Mostrar skeleton durante `isLoading`
+2. Exibir badge/tooltip sutil quando `isStale === true` (ex: `⚡ dados de Xmin atrás`)
+3. Ter estado de erro com botão "Tentar novamente"
+4. Ter estado vazio com ação clara (não apenas "Sem dados")
