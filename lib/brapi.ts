@@ -1,11 +1,10 @@
 import { parseBrapiError } from './brapiErrors';
+import { BrapiQuoteResponse, AssetListItem } from '@/types/brapi';
 
 export interface BrapiConfig {
   baseURL: string;
   token: string;
 }
-
-import { BrapiQuoteResponse } from '@/types/brapi';
 
 class BrapiClient {
   private config: BrapiConfig;
@@ -55,8 +54,24 @@ class BrapiClient {
     return this.fetch<BrapiQuoteResponse>(`/quote/${ticker}`, params);
   }
 
-  public async getQuoteList(params?: Record<string, string>): Promise<{ stocks: import('@/types/brapi').AssetListItem[] }> {
-    return this.fetch<{ stocks: import('@/types/brapi').AssetListItem[] }>('/quote/list', params);
+  public async getQuoteList(params?: Record<string, string>): Promise<{ stocks: AssetListItem[] }> {
+    return this.fetch<{ stocks: AssetListItem[] }>('/quote/list', params);
+  }
+
+  public async getDividends(ticker: string): Promise<any> {
+    return this.fetch<any>(`/quote/${ticker}`, { dividends: 'true' });
+  }
+
+  public async getFundamentals(ticker: string): Promise<any> {
+    return this.fetch<any>(`/quote/${ticker}`, { fundamental: 'true' });
+  }
+
+  public async getCurrencies(currencies: string): Promise<any> {
+    return this.fetch<any>(`/v2/currency`, { currency: currencies });
+  }
+
+  public async getPrimeRates(country: string): Promise<any> {
+    return this.fetch<any>(`/v2/prime-rate`, { country });
   }
 }
 
