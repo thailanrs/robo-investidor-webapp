@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -99,7 +99,25 @@ export function EvolutionChart() {
     return grouped;
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const chartData = getGroupedData();
+
+  if (!mounted) {
+    return (
+      <Card className="col-span-2 border-white/5 bg-zinc-900/50 backdrop-blur-md text-zinc-100 min-h-[440px]">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+           <div className="h-10 w-48 bg-zinc-800 animate-pulse rounded" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-[320px] w-full mt-6 bg-zinc-800/20 animate-pulse rounded-xl" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="col-span-2 border-white/5 bg-zinc-900/50 backdrop-blur-md text-zinc-100">
@@ -125,13 +143,13 @@ export function EvolutionChart() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="h-[320px] w-full mt-6" style={{ position: 'relative' }}>
+        <div className="h-[320px] w-full mt-6 min-w-0 min-h-0" style={{ position: 'relative' }}>
           {isLoading ? (
             <div className="h-full w-full flex items-center justify-center">
               <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%" id="equity-evolution-container">
+            <ResponsiveContainer width="100%" height="100%" debounce={50} minWidth={0} minHeight={0} id="equity-evolution-container">
               <BarChart
                 data={chartData}
                 margin={{ top: 0, right: 25, left: 10, bottom: 0 }}

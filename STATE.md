@@ -1,5 +1,5 @@
 # Estado Atual do Projeto (State of Project)
-_Última atualização: 2026-05-01_
+_Última atualização: 2026-05-08_
 
 ## Tabelas no Supabase (Database Schema)
 * `ideal_portfolio_snapshots`: id (uuid, PK), snapshot_date (date, not null), tickers (jsonb, not null), created_at (timestamptz, default now())
@@ -8,7 +8,7 @@ _Última atualização: 2026-05-01_
 * `transactions`: id, user_id, ticker, type, quantity, unit_price, other_costs, date, created_at
 * `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao, nivel
 * `dividends`: id, user_id (references auth.users), ticker, type (enum: DIVIDENDO | JCP | RENDIMENTO_FII | AMORTIZACAO), amount, quantity, payment_date, notes, created_at, updated_at — **migration aplicada manualmente em produção em 29/04/2026 (ROB-13)**
-* `brapi_request_logs`: id, endpoint, ticker, latency_ms, cache_hit, stale, created_at — **tabela de telemetria da camada brapi (ROB-53)**
+* `data_cache`: key, value (jsonb), expires_at (timestamptz) — **tabela KV genérica para cache de dados de mercado** (renomeada de `brapi_cache` em 2026-05-08)
 * [NOVAS TABELAS DEVEM SER REGISTRADAS AQUI COM SEUS CAMPOS EXATOS]
 
 ## Arquitetura de Autenticação
@@ -32,39 +32,20 @@ _Última atualização: 2026-05-01_
 * [x] ROB-12 - Componentes Globais UI (Input e Select em Glassmorphism)
 * [x] ROB-13 - CRUD de Proventos (Dividendos/JCP/FII) + Página `/proventos` com KPIs, Gráfico de Evolução, Tabela com Filtros (PR #22 mergeado em 29/04/2026)
 * [x] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
-* [x] ROB-36 - brapi: Setup SDK, singleton client e variáveis de ambiente
-* [x] ROB-37 - brapi: API de cotações em tempo real (ações, FIIs, ETFs, BDRs) → `GET /api/quotes`
-* [x] ROB-53 - brapi: Estratégia de cache, rate limiting e error handling
-* [x] ROB-48 - brapi: Lista de ativos disponíveis / autocomplete → `GET /api/assets/search`
-* [x] ROB-49 - brapi: Histórico de preços OHLCV → `GET /api/history/[ticker]`
-* [x] ROB-50 - brapi: Dividendos e JCP históricos → `GET /api/dividends/[ticker]`
-* [x] ROB-51 - brapi: Dados fundamentalistas → `GET /api/fundamentals/[ticker]`
-* [x] ROB-52 - brapi: Câmbio e indicadores econômicos (SELIC, IPCA) → `GET /api/macro`
+* [x] Rota `/api/macro` — Câmbio (USD/BRL, EUR/BRL) via Yahoo Finance + SELIC/CDI via Bolsai API
+
+### Funcionalidades Removidas/Migradas
+* ~~ROB-36 a ROB-53~~ — Integração brapi.dev removida em 2026-05-08. Dados de mercado migrados para **yahoo-finance2** (cotações, histórico, dividendos), **Bolsai API** (fundamentalistas BR) e **BCB SGS** (macro). Motivo: limitações do plano gratuito da brapi não supriam o volume de dados necessário. E Bolsai retornou 403 para macro.
 
 ## Regras de Negócio
 * **Outros Custos (`other_costs`):** Campo que representa taxas, emolumentos e corretagem. **NÃO** entra no cálculo de preço médio ou valor do ativo. É usado apenas para representar o custo total da operação: `custo_total = (quantity × unit_price) + other_costs`.
 * **Preço Médio Ponderado:** Calculado apenas sobre operações de COMPRA: `PM = (Σ qtd_compra × preço_compra) / Σ qtd_compra`. Operações de VENDA reduzem a quantidade em carteira mas **NÃO** alteram o preço médio. Engine em `lib/portfolio.ts`.
-* **Dados de Mercado:** Toda cotação, histórico, dividendo, fundamentalista ou macro exibido na UI deve ser originado da camada brapi (API Routes + cache). Nunca chamar `brapiClient` diretamente de componentes.
+* **Dados de Mercado:** Toda cotação, histórico, dividendo, fundamentalista ou macro exibido na UI deve ser originado das fontes de dados oficiais (Yahoo Finance, Bolsai, Fundamentus Edge Function). Todas as chamadas devem usar `withCache()` de `lib/dataCache.ts`.
 * **Stale Data:** O campo `stale: true` no response das API Routes indica dado servido do cache. A UI deve exibir indicador visual sutil quando `stale === true`.
-
-## Próximo Ciclo: Service Layer + UI Integration 🔄
-
-A camada de API Routes brapi está 100% completa. O próximo ciclo conecta essas rotas aos hooks React Query e componentes de UI.
-
-### Issues a Implementar (Service Layer)
-
-| Issue | Descrição | Hook | Depende de |
-|---|---|---|---|
-| ROB-54 | `useQuotes` hook + integração na página Carteira | `hooks/brapi/useQuotes.ts` | ROB-37 ✅ |
-| ROB-55 | `useHistory` hook + `<PriceChart>` OHLCV | `hooks/brapi/useHistory.ts` | ROB-49 ✅ |
-| ROB-56 | `useDividends` hook + `<DividendTimeline>` com match automático | `hooks/brapi/useDividends.ts` | ROB-50 ✅ |
-| ROB-57 | `useFundamentals` hook + `<FundamentalsPanel>` | `hooks/brapi/useFundamentals.ts` | ROB-51 ✅ |
-| ROB-58 | `useMacro` hook + `<MacroWidget>` no header | `hooks/brapi/useMacro.ts` | ROB-52 ✅ |
-| ROB-59 | `<AssetSearchInput>` com autocomplete e debounce | `components/ui/AssetSearchInput.tsx` | ROB-48 ✅ |
 
 ## Trabalho em Progresso
 * [ ] ROB-14 - Motor de Ranking da Fórmula Mágica (dependência do ROB-16)
-* [ ] Service Layer brapi (ROB-54 a ROB-59) — próximo sprint
+* [ ] Componentes de mercado para UI (MacroWidget, AssetSearch, FundamentalsPanel)
 
 ## Decisões Técnicas Registradas
 
@@ -72,9 +53,10 @@ A camada de API Routes brapi está 100% completa. O próximo ciclo conecta essas
 |---|---|---|
 | 2026-04-xx | Cache duplo memory + KV | Minimizar latência em cold start e deploys Vercel |
 | 2026-04-xx | TTLs diferenciados por endpoint | Dados macro/fundamentalistas mudam menos que cotações |
-| 2026-05-01 | `types/brapi.ts` via append-only | Evitar conflito de merge em trabalho paralelo Jules/Antigravity |
 | 2026-05-01 | Campo `stale` em todos os responses | Client pode exibir indicador de dado desatualizado na UI |
-| 2026-05-01 | brapi como fonte primária de dados | Substitui yahoo-finance2 e Fundamentus para cotações/histórico |
+| 2026-05-08 | Remoção da brapi.dev como fonte de dados | Limitações do plano gratuito não supriam o volume. Migrado para yahoo-finance2 + Bolsai API + BCB SGS |
+| 2026-05-08 | Remoção do `swr` | Padronização em `@tanstack/react-query` como único client-side data fetching |
+| 2026-05-08 | `types/market.ts` como tipagem genérica | Interfaces agnósticas de fonte: `MarketQuote`, `MacroOverview`, etc. |
 
 ## ⚠️ Pendências de Segurança (Supabase Advisors)
 As seguintes issues de segurança foram identificadas e devem ser endereçadas em sprints futuras:
@@ -86,4 +68,3 @@ As seguintes issues de segurança foram identificadas e devem ser endereçadas e
 ## Dívida Técnica
 * `npm_output.log` e `server.pid` commitados no repositório → adicionar ao `.gitignore` e remover do tracking
 * Revisar se `proxy.ts` na raiz ainda é necessário após estrutura App Router
-* Avaliar migração completa de `yahoo-finance2` para brapi após Service Layer implementada

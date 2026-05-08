@@ -1,75 +1,130 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { brapiClient } from '@/lib/brapi';
-import { withCache as getCached } from '@/lib/brapiCache';
-import { logBrapiRequest } from '@/lib/brapiLogger';
-import { handleBrapiError } from '@/lib/brapiResponseHelpers';
-import { CurrencyRate, MacroPrimeRate } from '@/types/brapi';
+import { NextResponse } from 'next/server';
+import YahooFinance from 'yahoo-finance2';
+import { withCache } from '@/lib/dataCache';
+import { CurrencyRate, MacroPrimeRate, MacroOverview } from '@/types/market';
 
-export async function GET(request: NextRequest) {
-  const startTime = Date.now();
-  let cacheHit = false;
-  let isStale = false;
+const yahooFinance = new YahooFinance({ suppressNotices: ['ripHistorical', 'yahooSurvey'] });
 
+const MACRO_CACHE_TTL = 60 * 60 * 1000; // 1 hora
+
+// ──────────────────────────────────────────────────────────
+// BCB SGS (Banco Central do Brasil — Sistema Gerenciador de Séries)
+// API pública, sem autenticação, sem rate limit significativo.
+// Séries utilizadas:
+//   432  = Meta para Taxa SELIC (% a.a.)
+//   4389 = Taxa CDI over anualizada (% a.a.)
+// ──────────────────────────────────────────────────────────
+const BCB_SGS_BASE = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs';
+
+interface BcbSgsEntry {
+  data: string;   // "DD/MM/YYYY"
+  valor: string;  // "14.75"
+}
+
+async function fetchBcbSerie(code: number, n = 1): Promise<BcbSgsEntry | null> {
+  const url = `${BCB_SGS_BASE}.${code}/dados/ultimos/${n}?formato=json`;
   try {
-    const result = await getCached(
-      `macro:overview`,
+    const res = await fetch(url, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) {
+      console.warn(`[MACRO] BCB SGS série ${code} returned ${res.status}`);
+      return null;
+    }
+    const data: BcbSgsEntry[] = await res.json();
+    return data.length > 0 ? data[data.length - 1] : null;
+  } catch (e) {
+    console.warn(`[MACRO] BCB SGS série ${code} fetch failed:`, e);
+    return null;
+  }
+}
+
+function bcbDateToISO(bcbDate: string): string {
+  // BCB retorna "DD/MM/YYYY" → converter para "YYYY-MM-DD"
+  const [d, m, y] = bcbDate.split('/');
+  return `${y}-${m}-${d}`;
+}
+
+// ──────────────────────────────────────────────────────────
+export async function GET() {
+  try {
+    const result = await withCache<MacroOverview>(
+      'macro:overview',
       async () => {
-        const [currencyRes, primeRatesRes] = await Promise.all([
-          brapiClient.getCurrencies('USD-BRL,EUR-BRL'),
-          brapiClient.getPrimeRates('brazil')
-        ]);
-        return { currencyRes, primeRatesRes };
+        const currencies: CurrencyRate[] = [];
+        const rates: MacroPrimeRate[] = [];
+
+        // 1. Câmbio via Yahoo Finance (USD/BRL e EUR/BRL)
+        try {
+          const [usdQuote, eurQuote] = await Promise.all([
+            yahooFinance.quote('USDBRL=X'),
+            yahooFinance.quote('EURBRL=X'),
+          ]);
+
+          if (usdQuote?.regularMarketPrice) {
+            currencies.push({
+              pair: 'USD/BRL',
+              bidPrice: usdQuote.regularMarketPrice,
+              percentChange: usdQuote.regularMarketChangePercent || 0,
+              updatedAtDate: new Date().toISOString().split('T')[0],
+            });
+          }
+
+          if (eurQuote?.regularMarketPrice) {
+            currencies.push({
+              pair: 'EUR/BRL',
+              bidPrice: eurQuote.regularMarketPrice,
+              percentChange: eurQuote.regularMarketChangePercent || 0,
+              updatedAtDate: new Date().toISOString().split('T')[0],
+            });
+          }
+        } catch (e) {
+          console.warn('[MACRO] Yahoo Finance currency fetch failed:', e);
+        }
+
+        // 2. Meta SELIC via BCB SGS (série 432 = % a.a.)
+        const selicEntry = await fetchBcbSerie(432);
+        if (selicEntry) {
+          rates.push({
+            name: 'SELIC',
+            value: parseFloat(selicEntry.valor),
+            unit: '% a.a.',
+            effectiveDate: bcbDateToISO(selicEntry.data),
+          });
+        }
+
+        // 3. CDI over anualizado via BCB SGS (série 4389 = % a.a.)
+        const cdiEntry = await fetchBcbSerie(4389);
+        if (cdiEntry) {
+          rates.push({
+            name: 'CDI',
+            value: parseFloat(cdiEntry.valor),
+            unit: '% a.a.',
+            effectiveDate: bcbDateToISO(cdiEntry.data),
+          });
+        }
+
+        return {
+          currencies,
+          rates,
+          stale: false,
+        };
       },
-      1 * 60 * 60 * 1000 // 1 hour TTL
+      MACRO_CACHE_TTL
     );
 
-    cacheHit = result.cache_hit;
-    isStale = result.stale;
-
-    const rawCurrencies = result.data.currencyRes?.currency || [];
-    const mappedCurrencies: CurrencyRate[] = rawCurrencies.map((c: any) => ({
-      pair: c.name || (c.fromCurrency + '-' + c.toCurrency),
-      bidPrice: Number(c.bidPrice || c.high || 0),
-      percentChange: Number(c.pctChange !== undefined ? c.pctChange : (c.varBid || 0)),
-      updatedAtDate: c.updatedAtDate || c.create_date || ''
-    }));
-
-    const rawRates = result.data.primeRatesRes?.['prime-rate'] || [];
-    const rates: MacroPrimeRate[] = rawRates.map((r: any) => ({
-      name: r.name,
-      value: Number(r.value || 0),
-      unit: r.unit || '%',
-      effectiveDate: r.date || ''
-    }));
-
-    // Log success
-    const latency_ms = Date.now() - startTime;
-    logBrapiRequest({
-      endpoint: 'macro',
-      latency_ms,
-      cache_hit: cacheHit,
-      stale: isStale,
-      status_code: 200
-    }).catch(console.error);
-
     return NextResponse.json({
-      currencies: mappedCurrencies,
-      rates,
-      stale: isStale
+      data: {
+        ...result.data,
+        stale: result.stale,
+      },
+      cache_hit: result.cache_hit,
     });
-
-  } catch (error: unknown) {
-    const latency_ms = Date.now() - startTime;
-
-    logBrapiRequest({
-      endpoint: 'macro',
-      latency_ms,
-      cache_hit: false,
-      stale: false,
-      status_code: (error as any)?.statusCode || 500,
-      error_type: (error as any)?.name || 'UnknownError'
-    }).catch(console.error);
-
-    return handleBrapiError(error);
+  } catch (error) {
+    console.error(`[MACRO ERROR]`, error);
+    return NextResponse.json(
+      { error: 'Falha ao buscar dados macroeconômicos' },
+      { status: 500 }
+    );
   }
 }

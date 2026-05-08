@@ -1,4 +1,4 @@
-import { DividendRecord } from '@/types/brapi';
+import { DividendRecord } from '@/types/market';
 
 export interface UserDividendEntry {
   ticker: string;
@@ -10,25 +10,25 @@ export interface DividendSuggestion extends DividendRecord {
 }
 
 export function matchDividendsWithUserEntries(
-  brapiDividends: DividendRecord[],
+  sourceDividends: DividendRecord[],
   userEntries: UserDividendEntry[]
 ): DividendSuggestion[] {
-  return brapiDividends
-    .filter(brapiDiv => {
-      // Formata a data de pagamento da Brapi para considerar apenas YYYY-MM-DD
-      const brapiDate = brapiDiv.paymentDate.split('T')[0];
-      const brapiTicker = brapiDiv.relatedTo;
+  return sourceDividends
+    .filter(div => {
+      // Formata a data de pagamento para considerar apenas YYYY-MM-DD
+      const divDate = div.paymentDate.split('T')[0];
+      const divTicker = div.relatedTo;
 
       // Verifica se existe algum lançamento do usuário para a mesma data e mesmo ticker
       const hasEntry = userEntries.some(entry => {
         const entryDate = entry.paymentDate.split('T')[0];
-        return entryDate === brapiDate && entry.ticker === brapiTicker;
+        return entryDate === divDate && entry.ticker === divTicker;
       });
 
       return !hasEntry;
     })
-    .map(brapiDiv => ({
-      ...brapiDiv,
+    .map(div => ({
+      ...div,
       suggested: true
     }));
 }

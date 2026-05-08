@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { TransactionForm, TransactionFormData } from "@/components/TransactionForm";
 import { TransactionTable } from "@/components/TransactionTable";
-import { Transaction, fetchTransactions, insertTransaction, updateTransaction, deleteTransaction } from "@/lib/transactions";
-import { Loader2, Plus } from "lucide-react";
+import { Transaction, fetchTransactions, insertTransaction, insertTransactions, updateTransaction, deleteTransaction } from "@/lib/transactions";
+import { Loader2, Plus, Upload } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
+import { ImportCSVModal } from "@/components/ImportCSVModal";
 
 export default function LancamentosPage() {
   const user = useUser();
@@ -14,6 +15,7 @@ export default function LancamentosPage() {
   const [error, setError] = useState<string | null>(null);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showImportCSV, setShowImportCSV] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
@@ -40,6 +42,19 @@ export default function LancamentosPage() {
 
     setTransactions((prev) => [newTx, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setShowForm(false);
+  };
+
+  const handleImportCSV = async (newTransactions: any[]) => {
+    const txToInsert = newTransactions.map(tx => ({
+      ...tx,
+      user_id: user.id
+    }));
+    
+    const inserted = await insertTransactions(txToInsert);
+    
+    setTransactions((prev) => 
+      [...inserted, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    );
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
@@ -101,16 +116,25 @@ export default function LancamentosPage() {
         </div>
 
         {!showForm && (
-          <button
-            onClick={() => {
-              setEditingTransaction(null);
-              setShowForm(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Lançamento
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowImportCSV(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium rounded-md transition-colors shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Importar CSV
+            </button>
+            <button
+              onClick={() => {
+                setEditingTransaction(null);
+                setShowForm(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Lançamento
+            </button>
+          </div>
         )}
       </div>
 
@@ -118,6 +142,13 @@ export default function LancamentosPage() {
         <div className="p-4 bg-red-100/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-md">
           {error}
         </div>
+      )}
+
+      {showImportCSV && (
+        <ImportCSVModal 
+          onClose={() => setShowImportCSV(false)} 
+          onImport={handleImportCSV} 
+        />
       )}
 
       {/* Form Section */}

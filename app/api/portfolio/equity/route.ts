@@ -10,13 +10,18 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-    const { data: transactions } = await supabase
+    const { data: rawTransactions } = await supabase
       .from("transactions")
       .select("*")
       .eq("user_id", user.id)
       .order("date", { ascending: true });
 
-    if (!transactions || transactions.length === 0) {
+    const transactions = (rawTransactions || []).filter((tx: any) => {
+      const t = (tx.ticker || "").trim().toUpperCase();
+      return !t.endsWith("12");
+    });
+
+    if (transactions.length === 0) {
       return NextResponse.json({ data: [] });
     }
 

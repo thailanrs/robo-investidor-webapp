@@ -2,7 +2,7 @@ import React from "react";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 
 export const metadata = {
-  title: "Meu Perfil | Robô Investidor",
+  title: "Meu Perfil | ElevenFinance",
   description: "Gerencie suas configurações e dados pessoais.",
 };
 

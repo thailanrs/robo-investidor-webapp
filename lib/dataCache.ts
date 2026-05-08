@@ -77,7 +77,7 @@ export async function withCache<T>(
       }
     }
   } catch (error) {
-    console.error(`[BRAPI CACHE] Error reading from KV cache for key ${key}:`, error);
+    console.error(`[DATA CACHE] Error reading from KV cache for key ${key}:`, error);
   }
 
   try {
@@ -90,7 +90,7 @@ export async function withCache<T>(
     try {
       await setSupabaseKV(key, data, ttlMs);
     } catch (error) {
-      console.error(`[BRAPI CACHE] Error writing to KV cache for key ${key}:`, error);
+      console.error(`[DATA CACHE] Error writing to KV cache for key ${key}:`, error);
     }
 
     return {
@@ -122,7 +122,7 @@ export async function withCache<T>(
         };
       }
     } catch (kvError) {
-      console.error(`[BRAPI CACHE] Error reading stale data from KV cache for key ${key}:`, kvError);
+      console.error(`[DATA CACHE] Error reading stale data from KV cache for key ${key}:`, kvError);
     }
 
     throw error;

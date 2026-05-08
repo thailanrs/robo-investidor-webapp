@@ -18,10 +18,10 @@ mock.module('@/utils/supabase/server', () => {
   };
 });
 
-import { withCache, inMemoryCache } from './brapiCache';
+import { withCache, inMemoryCache } from './dataCache';
 import * as supabaseKv from './supabaseKv';
 
-describe('brapiCache', () => {
+describe('dataCache', () => {
   let getSpy: Mock<(...args: unknown[]) => unknown>;
   let setSpy: Mock<(...args: unknown[]) => unknown>;
 

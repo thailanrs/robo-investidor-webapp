@@ -27,20 +27,19 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
     <>
       {/* Mobile backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar container */}
-      <aside 
-        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out md:translate-x-0 md:static group ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } ${collapsed ? "md:w-16" : "md:w-64"} w-64`}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out md:translate-x-0 md:static group ${isOpen ? "translate-x-0" : "-translate-x-full"
+          } ${collapsed ? "md:w-16" : "md:w-64"} w-64`}
       >
         {/* Border Hit Area & Floating Toggle Button */}
-        <div 
+        <div
           onClick={() => setCollapsed(!collapsed)}
           className="hidden md:block absolute top-0 -right-2 h-full w-4 z-[60] cursor-pointer group/border"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
@@ -49,7 +48,7 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
             opacity-0 group-hover:opacity-100 group-hover/border:opacity-100`}>
             {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           </div>
-          
+
           {/* Visual feedback line on border hover */}
           <div className="absolute top-0 left-2 h-full w-0.5 bg-emerald-500/0 group-hover/border:bg-emerald-500/20 transition-colors" />
         </div>
@@ -64,14 +63,14 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
                 </div>
                 {!collapsed && (
                   <span className="font-bold text-lg tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
-                    Robô Investidor
+                    ElevenFinance
                   </span>
                 )}
               </Link>
             </div>
-            
+
             {/* Mobile Close Button */}
-            <button 
+            <button
               className="md:hidden text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
               onClick={() => setIsOpen(false)}
             >
@@ -89,13 +88,11 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
                   href={link.href}
                   onClick={() => setIsOpen(false)}
                   title={collapsed ? link.label : undefined}
-                  className={`flex items-center gap-3 rounded-lg transition-colors relative group ${
-                    collapsed ? "md:justify-center md:px-0 md:py-2.5 px-3 py-2.5" : "px-3 py-2.5"
-                  } ${
-                    isActive 
-                      ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium" 
+                  className={`flex items-center gap-3 rounded-lg transition-colors relative group ${collapsed ? "md:justify-center md:px-0 md:py-2.5 px-3 py-2.5" : "px-3 py-2.5"
+                    } ${isActive
+                      ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
                       : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  }`}
+                    }`}
                 >
                   {link.icon}
                   <span className={`transition-opacity duration-200 ${collapsed ? "md:hidden" : ""}`}>
@@ -116,7 +113,7 @@ export function Sidebar({ isOpen, setIsOpen, collapsed, setCollapsed }: SidebarP
           {/* Footer */}
           <div className="border-t border-zinc-200 dark:border-zinc-800 py-3">
             <div className={`text-[10px] uppercase tracking-widest font-semibold text-center text-zinc-400 dark:text-zinc-600 ${collapsed ? "md:px-1" : "px-4"}`}>
-              {collapsed ? "v3" : "Robô Investidor v3.0.0"}
+              {collapsed ? "v1" : "ElevenFinance v1.0.0"}
             </div>
           </div>
         </div>

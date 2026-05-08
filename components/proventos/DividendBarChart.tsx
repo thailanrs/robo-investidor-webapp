@@ -120,7 +120,7 @@ export function DividendBarChart({ data, period }: DividendBarChartProps) {
 
   return (
     <div className="w-full h-full min-h-[300px]" style={{ position: 'relative' }}>
-      <ResponsiveContainer width="100%" height="100%" id="dividend-chart-container">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} id="dividend-chart-container">
         <BarChart
           data={chartData}
           margin={{ top: 10, right: 0, left: 0, bottom: 0 }}

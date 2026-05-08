@@ -39,7 +39,7 @@ Exemplo: `20260429120000_create_dividends.sql`
 
 ### Checklist pós-merge (responsabilidade do PM/Dev)
 - [ ] Migration executada manualmente no Supabase de produção
-- [ ] Smoke test da funcionalidade em produção (`robo-investidor-webapp.vercel.app`)
+- [ ] Smoke test da funcionalidade em produção (`eleven-finance.vercel.app`)
 - [ ] Confirmar no PR que a migration foi aplicada em produção
 
 10. **TypeScript Strict:** Sempre tratar casos de `null` em callbacks de componentes Radix UI (ex: `onValueChange` do `<Select>`). O tipo do handler deve aceitar `null` ou filtrar com guard `if (v !== null)`.
@@ -47,93 +47,42 @@ Exemplo: `20260429120000_create_dividends.sql`
 
 ---
 
-## 🌐 Convenções da Camada Brapi (CRÍTICO)
-_Adicionado em 2026-05-01_
+## 🌐 Convenções da Camada de Dados de Mercado
+_Atualizado em 2026-05-08_
 
-### Padrão de API Route
+### Fontes de Dados
 
-Toda route que consome a brapi segue este contrato obrigatório:
+| Fonte | Uso | Pacote/API |
+|-------|-----|-----------|
+| **yahoo-finance2** | Cotações, histórico OHLCV, dividendos, múltiplos, câmbio | `yahoo-finance2` (npm) |
+| **Bolsai API** | Fundamentalistas BR (ações e FIIs), SELIC, CDI | `api.usebolsai.com` (REST) |
+| **Fundamentus** | Ranking quantitativo (Fórmula Mágica) | Scraping via Edge Function |
+
+### Padrão de Cache
+
+Toda chamada a fontes de dados externas deve usar `withCache()` de `lib/dataCache.ts`:
 
 ```typescript
-import { getCached } from '@/lib/brapiCache'
-import { handleBrapiError } from '@/lib/brapiErrors'
-import { logBrapiRequest } from '@/lib/brapiLogger'
-import { brapiClient } from '@/lib/brapiClient'
+import { withCache } from '@/lib/dataCache'
 
-export async function GET(req: Request) {
-  try {
-    // 1. Extrair params
-    const { searchParams } = new URL(req.url)
-    const ticker = searchParams.get('ticker') ?? ''
-
-    // 2. Montar cacheKey (incluir TODOS os params variáveis)
-    const cacheKey = `resource:${ticker}:${param1}:${param2}`
-
-    // 3. Registrar início
-    const start = Date.now()
-
-    // 4. Buscar com cache
-    const { data, stale } = await getCached(cacheKey, () => brapiClient.method(), TTL_MS)
-
-    // 5. Logar
-    await logBrapiRequest({
-      endpoint: '/api/resource',
-      ticker,
-      latencyMs: Date.now() - start,
-      cacheHit: !stale,
-      stale
-    })
-
-    // 6. Responder
-    return NextResponse.json({ ...data, stale })
-
-  } catch (error) {
-    // 7. Catch sempre via handleBrapiError
-    return handleBrapiError(error, ticker)
-  }
-}
+const result = await withCache(
+  `resource:${param}`,       // cache key
+  () => fetchExternalData(),  // fetcher
+  TTL_MS                      // TTL em milliseconds
+)
 ```
 
-### Regras de Tipagem (`types/brapi.ts`)
+### Regras de Tipagem (`types/market.ts`)
 
 * **Sempre fazer APPEND** ao final do arquivo — nunca sobrescrever interfaces existentes
-* Campos ausentes na resposta brapi retornam `null`, nunca `undefined` ou `NaN`
+* Campos ausentes na resposta devem retornar `null`, nunca `undefined` ou `NaN`
 * Timestamps Unix (segundos) → converter para `string 'YYYY-MM-DD'` antes de retornar
-* Interfaces exportadas: `QuoteResult`, `AssetListItem`, `OHLCVDataPoint`, `HistoryResponse`, `DividendRecord`, `FundamentalsData`, `CurrencyRate`, `MacroPrimeRate`, `MacroOverview`
-
-### TTLs Padrão por Tipo de Dado
-
-| Tipo de Dado | TTL | Constante |
-|---|---|---|
-| Cotações em tempo real | 5 min | `BRAPI_TTL_QUOTES` |
-| Câmbio + Macro | 1h | `BRAPI_TTL_MACRO` |
-| Histórico OHLCV | 1h | `BRAPI_TTL_HISTORY` |
-| Dividendos e JCP | 12h | `BRAPI_TTL_DIVIDENDS` |
-| Dados fundamentalistas | 24h | `BRAPI_TTL_FUNDAMENTALS` |
-| Lista de ativos | 24h | `BRAPI_TTL_ASSETS` |
-
-### Convenção de Hooks React Query (próxima fase)
-
-Hooks que consomem as API Routes brapi seguem o padrão:
-* **Localização:** `hooks/brapi/use{Resource}.ts`
-* **Nomes:** `useQuotes`, `useHistory`, `useDividends`, `useFundamentals`, `useMacro`, `useAssetSearch`
-* **Interface de retorno obrigatória:**
-  ```typescript
-  {
-    data: T | undefined
-    isLoading: boolean
-    isStale: boolean       // reflete o campo stale da API
-    error: Error | null
-    refetch: () => void
-  }
-  ```
-* **staleTime React Query:** deve ser ligeiramente menor que o TTL do cache da API (ex: cotações → `staleTime: 4 * 60 * 1000`)
-* **Nunca** chamar `brapiClient` diretamente de hooks ou componentes — sempre via fetch para a API Route
+* Interfaces exportadas: `MarketQuote`, `QuoteResponse`, `AssetListItem`, `OHLCVDataPoint`, `HistoryResponse`, `DividendRecord`, `FundamentalsData`, `CurrencyRate`, `MacroPrimeRate`, `MacroOverview`
 
 ### Exibição de Dados Stale na UI
 
-Todo componente que exibe dados brapi deve:
-1. Mostrar skeleton durante `isLoading`
-2. Exibir badge/tooltip sutil quando `isStale === true` (ex: `⚡ dados de Xmin atrás`)
+Todo componente que exibe dados de mercado deve:
+1. Mostrar skeleton durante loading
+2. Exibir badge/tooltip sutil quando dados são stale (ex: `⚡ dados de Xmin atrás`)
 3. Ter estado de erro com botão "Tentar novamente"
 4. Ter estado vazio com ação clara (não apenas "Sem dados")

@@ -1,9 +1,9 @@
 # Design & UI Patterns
-_Última atualização: 2026-05-01_
+_Última atualização: 2026-05-08_
 
 ## Visão Geral do Design System
 
-O Robô Investidor utiliza um design system baseado em **Dark Mode nativo** com acentos neon, construído sobre Tailwind CSS e Shadcn UI. O padrão visual prioriza densidade de informação, legibilidade em telas de dados financeiros e feedback visual imediato.
+O ElevenFinance utiliza um design system baseado em **Dark Mode nativo** com acentos neon, construído sobre Tailwind CSS e Shadcn UI. O padrão visual prioriza densidade de informação, legibilidade em telas de dados financeiros e feedback visual imediato.
 
 ## Paleta de Cores
 
@@ -62,9 +62,9 @@ const VariacaoPercent = ({ value }: { value: number }) => (
 <Skeleton className="h-[200px] w-full" /> // gráfico
 ```
 
-### Indicador de Dado Stale (brapi)
+### Indicador de Dado Stale
 ```tsx
-// Exibir quando isStale === true nos hooks brapi
+// Exibir quando isStale === true nos dados de mercado
 <span className="text-xs text-yellow-500/70 flex items-center gap-1">
   <span>⚡</span>
   <span>dados de {minutesAgo}min atrás</span>
@@ -112,22 +112,19 @@ Todas as páginas em `app/(app)/` seguem o padrão:
 2. **Error state:** Mensagem contextual + botão de retry
 3. **Empty state:** Mensagem amigável + CTA para primeira ação
 
-## Componentes de Mercado (próxima fase — Service Layer)
+## Componentes de Mercado (próxima fase)
 
-Componentes que serão criados durante a integração das API Routes brapi à UI:
+Componentes planejados para futuras iterações da UI de mercado:
 
-| Componente | Consome | Localização | Descrição |
-|---|---|---|---|
-| `<AssetSearchInput>` | `/api/assets/search` | `components/ui/AssetSearchInput.tsx` | Autocomplete com debounce 300ms para seleção de ativo. Exibir ticker + nome. |
-| `<PriceChart>` | `/api/history/[ticker]` | `components/charts/PriceChart.tsx` | Gráfico OHLCV com range selector (1M / 3M / 6M / 1A / MAX). Recharts `CandlestickChart` ou `LineChart`. |
-| `<DividendTimeline>` | `/api/dividends/[ticker]` | `components/dividends/DividendTimeline.tsx` | Timeline de proventos com badge "sugerido" para dividendos não lançados (via `dividendMatcher`). |
-| `<FundamentalsPanel>` | `/api/fundamentals/[ticker]` | `components/fundamentals/FundamentalsPanel.tsx` | Grid com P/L, P/VP, DY, consenso de analistas (targetMeanPrice, recommendationKey). |
-| `<MacroWidget>` | `/api/macro` | `components/layout/MacroWidget.tsx` | Barra no Header: USD/BRL, EUR/BRL, SELIC. Atualização a cada 1h. |
-| `<QuoteBadge>` | `/api/quotes` | `components/ui/QuoteBadge.tsx` | Preço atual + variação % colorida. Polling a cada 5min. |
+| Componente | Descrição | Localização Planejada |
+|---|---|---|
+| `<MacroWidget>` | Barra no Header: USD/BRL, EUR/BRL, SELIC. Atualização a cada 1h. | `components/layout/MacroWidget.tsx` |
+| `<AssetSearchInput>` | Autocomplete com debounce 300ms para seleção de ativo. | `components/ui/AssetSearchInput.tsx` |
+| `<FundamentalsPanel>` | Grid com P/L, P/VP, DY, métricas fundamentalistas. | `components/fundamentals/FundamentalsPanel.tsx` |
 
 ### Estados obrigatórios para todos os componentes de mercado
 
-Todo componente que consome dados brapi **deve** implementar os 4 estados:
+Todo componente que consome dados de mercado **deve** implementar os 4 estados:
 
 ```tsx
 // 1. Loading — skeleton que espelha o layout real

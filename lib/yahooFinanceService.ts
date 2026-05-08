@@ -1,4 +1,5 @@
 import YahooFinance from 'yahoo-finance2';
+import { bolsaiClient } from './services/bolsaiService';
 
 // Configuração para suprimir alertas de depreciação de rotas do Yahoo que não afetam a funcionalidade
 const yahooFinance = new YahooFinance({ 
@@ -109,16 +110,39 @@ export async function analisarAtivo(ticker: string): Promise<AnaliseAtivoResult>
     const sectorEn = quote.summaryProfile?.sector || 'Desconhecido';
     const industryEn = quote.summaryProfile?.industry || 'Desconhecido';
     
-    const setor = SECTOR_TRANSLATIONS[sectorEn] || sectorEn;
-    const industria = INDUSTRY_TRANSLATIONS[industryEn] || industryEn;
+    let setor = SECTOR_TRANSLATIONS[sectorEn] || sectorEn;
+    let industria = INDUSTRY_TRANSLATIONS[industryEn] || industryEn;
     
-    const pl = quote.summaryDetail?.trailingPE || 0;
+    let pl = quote.summaryDetail?.trailingPE || 0;
     
     // enterpriseToEbitda é o padrão mais comum retornado pela API do Yahoo na falta de EBIT
-    const evEbit = quote.defaultKeyStatistics?.enterpriseToEbitda || quote.defaultKeyStatistics?.enterpriseToEbit || 0;
+    let evEbit = quote.defaultKeyStatistics?.enterpriseToEbitda || quote.defaultKeyStatistics?.enterpriseToEbit || 0;
     
-    const roe = (quote.financialData?.returnOnEquity || 0) * 100;
-    const dyAtual = (quote.summaryDetail?.dividendYield || 0) * 100;
+    let roe = (quote.financialData?.returnOnEquity || 0) * 100;
+    let dyAtual = (quote.summaryDetail?.dividendYield || 0) * 100;
+
+    // INTEGRAÇÃO BOLSAI: Sobrescrever com dados mais precisos do mercado BR
+    const cleanTicker = ticker.replace('.SA', '');
+    const isFii = cleanTicker.endsWith('11') || cleanTicker.endsWith('11B');
+
+    try {
+      if (isFii) {
+        const fiiData = await bolsaiClient.getFiiFundamentals(cleanTicker);
+        setor = fiiData.segment || 'Fundo Imobiliário';
+        industria = fiiData.management_type || 'FII';
+        pl = fiiData.pvp; // P/VP é a métrica padrão de preço para FIIs
+        dyAtual = fiiData.dividend_yield_ttm || dyAtual;
+      } else {
+        const fundData = await bolsaiClient.getFundamentals(cleanTicker);
+        pl = fundData.pl || pl;
+        evEbit = fundData.ev_ebit || evEbit;
+        roe = fundData.roe || roe;
+        // Se a empresa não tem setor definido no Yahoo, usar o corporate name
+        if (setor === 'Desconhecido') setor = fundData.corporate_name;
+      }
+    } catch (bolsaiError) {
+      console.warn(`Bolsai fetch failed for ${cleanTicker}, falling back to Yahoo Finance.`);
+    }
 
     const safeCurrentPrice = Number(currentPrice) || 0;
     const safePl = Number(pl) || 0;
