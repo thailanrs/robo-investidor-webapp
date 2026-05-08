@@ -19,8 +19,8 @@ type YahooHistoricalRow = {
   volume: number;
 };
 
-/** Busca taxa CDI mensal acumulada do Banco Central do Brasil */
-async function fetchCDISeries(startDate: Date, endDate: Date): Promise<SeriesPoint[]> {
+/** Busca taxa CDI mensal acumulada do Banco Central do Brasil e aplica o TWR baseado no fluxo da carteira */
+async function fetchCDISeries(startDate: Date, endDate: Date, transactions: any[]): Promise<SeriesPoint[]> {
   const fmt = (d: Date) =>
     `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   const url = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.4391/dados?formato=json&dataInicial=${fmt(startDate)}&dataFinal=${fmt(endDate)}`;
@@ -38,7 +38,7 @@ async function fetchCDISeries(startDate: Date, endDate: Date): Promise<SeriesPoi
   }
 
   const series: SeriesPoint[] = [];
-  let accumulated = 1.0;
+  let accumulatedReturn = 1.0;
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
   const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
@@ -46,28 +46,65 @@ async function fetchCDISeries(startDate: Date, endDate: Date): Promise<SeriesPoi
   const startKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
   series.push({ date: startKey, value: 0 });
 
-  // Começa a acumular a partir do primeiro mês real (cursor se mantém no mesmo mês, mas o primeiro ponto já foi gerado)
+  let prevMonthValue = 0;
+  
+  // Aportes do mês inicial (antes do cursor avançar)
+  const initialMonthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+  for (const tx of transactions) {
+    if (new Date(tx.date) > initialMonthEnd) continue;
+    const cost = tx.quantity * tx.unit_price + (tx.other_costs || 0);
+    prevMonthValue += (tx.type === "COMPRA" ? cost : -cost);
+  }
+
+  cursor.setMonth(cursor.getMonth() + 1);
+
   while (cursor <= end) {
     const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
-    const monthlyRate = byMonth.get(key) ?? 0;
-    
-    // Só acumulamos se não for o primeiro ponto (que já é 0)
-    if (key !== startKey) {
-      accumulated = accumulated * (1 + monthlyRate / 100);
-      series.push({ date: key, value: parseFloat(((accumulated - 1) * 100).toFixed(2)) });
+    const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    const monthlyRate = (byMonth.get(key) ?? 0) / 100;
+
+    // Fluxo de caixa do mês
+    let fluxoCaixa = 0;
+    for (const tx of transactions) {
+      const txDate = new Date(tx.date);
+      if (txDate >= monthStart && txDate <= monthEnd) {
+        const cost = tx.quantity * tx.unit_price + (tx.other_costs || 0);
+        fluxoCaixa += (tx.type === "COMPRA" ? cost : -cost);
+      }
     }
-    
+
+    // CDI rende sobre o saldo anterior + aportes do mês (simplificação)
+    const baseValue = prevMonthValue + fluxoCaixa;
+    const currentTotalValue = baseValue * (1 + monthlyRate);
+    let hp = 0;
+
+    if (baseValue !== 0) {
+      hp = (currentTotalValue - baseValue) / baseValue;
+    } else if (currentTotalValue > 0 && fluxoCaixa > 0 && prevMonthValue === 0) {
+      hp = (currentTotalValue - fluxoCaixa) / fluxoCaixa;
+    }
+
+    accumulatedReturn *= (1 + hp);
+
+    series.push({ 
+      date: key, 
+      value: parseFloat(((accumulatedReturn - 1) * 100).toFixed(2)) 
+    });
+
+    prevMonthValue = currentTotalValue;
     cursor.setMonth(cursor.getMonth() + 1);
   }
 
   return series;
 }
 
-/** Busca série histórica de benchmark (Ibovespa) */
+/** Busca série histórica de benchmark (Ibovespa) e aplica o TWR baseado no fluxo da carteira */
 async function fetchBenchmarkSeries(
   symbol: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  transactions: any[]
 ): Promise<SeriesPoint[]> {
   try {
     const hist = (await yahooFinance.historical(symbol, {
@@ -78,24 +115,87 @@ async function fetchBenchmarkSeries(
 
     if (!hist || hist.length === 0) return [];
 
-    const basePrice = hist[0].adjClose ?? hist[0].close;
-    const series: SeriesPoint[] = [];
-    
-    // Ponto inicial (0%)
-    series.push({
-      date: `${hist[0].date.getFullYear()}-${String(hist[0].date.getMonth() + 1).padStart(2, "0")}`,
-      value: 0
-    });
-
-    for (let i = 1; i < hist.length; i++) {
-      const h = hist[i];
-      const price = h.adjClose ?? h.close;
-      const pct = basePrice > 0 ? ((price / basePrice) - 1) * 100 : 0;
-      series.push({
-        date: `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, "0")}`,
-        value: parseFloat(pct.toFixed(2)),
-      });
+    const priceMap = new Map<string, number>();
+    for (const h of hist) {
+       const key = `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, "0")}`;
+       priceMap.set(key, h.adjClose ?? h.close);
     }
+
+    const series: SeriesPoint[] = [];
+    const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+    const baseKey = `${hist[0].date.getFullYear()}-${String(hist[0].date.getMonth() + 1).padStart(2, "0")}`;
+    const basePrice = priceMap.get(baseKey) || (hist[0].adjClose ?? hist[0].close);
+    let lastKnown = basePrice;
+
+    // Ponto inicial
+    const startKey = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+    series.push({ date: startKey, value: 0 });
+    
+    if (priceMap.has(startKey)) lastKnown = priceMap.get(startKey)!;
+
+    let prevMonthValue = 0;
+    let accumulatedReturn = 1.0;
+    let idealQuotas = 0; // Quantidade de cotas virtuais do benchmark
+
+    // Prepara o valor base para o cálculo do próximo mês
+    const initialMonthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    for (const tx of transactions) {
+      if (new Date(tx.date) > initialMonthEnd) continue;
+      const cost = tx.quantity * tx.unit_price + (tx.other_costs || 0);
+      if (tx.type === "COMPRA") idealQuotas += cost / lastKnown;
+      else idealQuotas -= cost / lastKnown;
+    }
+    prevMonthValue = idealQuotas * lastKnown;
+
+    cursor.setMonth(cursor.getMonth() + 1);
+
+    while (cursor <= end) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`;
+      const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+      const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+      
+      if (priceMap.has(key)) {
+        lastKnown = priceMap.get(key)!;
+      }
+
+      // Fluxo de caixa do mês
+      let fluxoCaixa = 0;
+      for (const tx of transactions) {
+        const txDate = new Date(tx.date);
+        if (txDate >= monthStart && txDate <= monthEnd) {
+          const cost = tx.quantity * tx.unit_price + (tx.other_costs || 0);
+          fluxoCaixa += (tx.type === "COMPRA" ? cost : -cost);
+        }
+      }
+
+      // Atualiza cotas virtuais com o fluxo do mês (assumindo compra no preço do mês)
+      if (fluxoCaixa !== 0) {
+        idealQuotas += fluxoCaixa / lastKnown;
+      }
+
+      const currentTotalValue = idealQuotas * lastKnown;
+      const baseValue = prevMonthValue + fluxoCaixa;
+      let hp = 0;
+
+      if (baseValue !== 0) {
+        hp = (currentTotalValue - baseValue) / baseValue;
+      } else if (currentTotalValue > 0 && fluxoCaixa > 0 && prevMonthValue === 0) {
+        hp = (currentTotalValue - fluxoCaixa) / fluxoCaixa;
+      }
+
+      accumulatedReturn *= (1 + hp);
+
+      series.push({
+        date: key,
+        value: parseFloat(((accumulatedReturn - 1) * 100).toFixed(2)),
+      });
+
+      prevMonthValue = currentTotalValue;
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
     return series;
   } catch (error) {
     console.error(`Error fetching benchmark ${symbol}:`, error);
@@ -122,10 +222,31 @@ async function fetchPortfolioSeries(
         })) as YahooHistoricalRow[];
 
         const priceMap = new Map<string, number>();
+        let lastKnown = 0;
+        
+        // Pega o preço da primeira transação como fallback inicial
+        const firstTx = transactions.find((t: any) => t.ticker === ticker.replace('.SA', ''));
+        if (firstTx) lastKnown = firstTx.unit_price;
+
         for (const h of hist) {
           const key = `${h.date.getFullYear()}-${String(h.date.getMonth() + 1).padStart(2, "0")}`;
-          priceMap.set(key, h.adjClose ?? h.close);
+          // Usa h.close em vez de adjClose para alinhar com o preço de compra real (não ajustado por dividendos)
+          priceMap.set(key, h.close);
         }
+
+        // Forward fill para garantir que todos os meses existam
+        let tempCursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        const endCursor = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+        while (tempCursor <= endCursor) {
+          const key = `${tempCursor.getFullYear()}-${String(tempCursor.getMonth() + 1).padStart(2, "0")}`;
+          if (priceMap.has(key)) {
+            lastKnown = priceMap.get(key)!;
+          } else {
+            priceMap.set(key, lastKnown);
+          }
+          tempCursor.setMonth(tempCursor.getMonth() + 1);
+        }
+
         historicals[ticker] = priceMap;
       } catch { }
     })
@@ -181,25 +302,29 @@ async function fetchPortfolioSeries(
       currentTotalValue += qty * price;
     }
 
-    // 3. Fluxo de caixa do mês (Compras - Vendas)
-    let monthlyFlow = 0;
+    // 3. Fluxo de caixa do mês
+    let fluxoCaixa = 0;
     for (const tx of transactions) {
       const txDate = new Date(tx.date);
       if (txDate >= monthStart && txDate <= monthEnd) {
         const cost = tx.quantity * tx.unit_price + (tx.other_costs || 0);
-        monthlyFlow += (tx.type === "COMPRA" ? cost : -cost);
+        fluxoCaixa += (tx.type === "COMPRA" ? cost : -cost);
       }
     }
 
-    // 4. Calcular retorno mensal (Dietz Method simplificado)
-    // Retorno = Valor Final / (Valor Inicial + Fluxo)
-    if (prevMonthValue + monthlyFlow > 0) {
-      const monthlyReturn = currentTotalValue / (prevMonthValue + monthlyFlow);
-      accumulatedReturn *= monthlyReturn;
-    } else if (currentTotalValue > 0 && monthlyFlow > 0) {
-      // Caso inicial ou reinício
-      accumulatedReturn *= (currentTotalValue / monthlyFlow);
+    // 4. Calcular retorno mensal (TWR - Subperíodo Mensal)
+    // HP = (Valor Final - (Valor Inicial + Fluxo de Caixa)) / (Valor Inicial + Fluxo de Caixa)
+    let hp = 0;
+    const baseValue = prevMonthValue + fluxoCaixa;
+
+    if (baseValue !== 0) {
+      hp = (currentTotalValue - baseValue) / baseValue;
+    } else if (currentTotalValue > 0 && fluxoCaixa > 0 && prevMonthValue === 0) {
+      // Caso do primeiro aporte no mês inicial
+      hp = (currentTotalValue - fluxoCaixa) / fluxoCaixa;
     }
+
+    accumulatedReturn *= (1 + hp);
 
     series.push({ 
       date: key, 
@@ -233,7 +358,10 @@ export async function GET(request: Request) {
       .eq("user_id", user.id)
       .order("date", { ascending: true });
 
-    if (!transactions || transactions.length === 0) {
+    const allTransactions = transactions || [];
+    const filteredTransactions = allTransactions.filter((tx: any) => !tx.ticker.endsWith("12"));
+
+    if (filteredTransactions.length === 0) {
       return NextResponse.json({
         series: [
           { name: "Minha Carteira", data: [] },
@@ -243,7 +371,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const firstTxDate = new Date(transactions[0].date);
+    const firstTxDate = new Date(filteredTransactions[0].date);
     const now = new Date();
 
     // Lógica de StartDate: O período selecionado respeita o limite do primeiro lançamento
@@ -260,9 +388,9 @@ export async function GET(request: Request) {
     }
 
     const [portfolioSeries, cdiSeries, idealSeries] = await Promise.all([
-      fetchPortfolioSeries(transactions, startDate, now),
-      fetchCDISeries(startDate, now).catch(() => [] as SeriesPoint[]),
-      fetchBenchmarkSeries("^BVSP", startDate, now), // Ibovespa como Carteira Ideal
+      fetchPortfolioSeries(filteredTransactions, startDate, now),
+      fetchCDISeries(startDate, now, filteredTransactions).catch(() => [] as SeriesPoint[]),
+      fetchBenchmarkSeries("^BVSP", startDate, now, filteredTransactions), // Ibovespa como Carteira Ideal
     ]);
 
     return NextResponse.json({

@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/server';
 export async function getSupabaseKV<T>(key: string): Promise<{ value: T; expires_at: string } | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('brapi_cache')
+    .from('data_cache')
     .select('value, expires_at')
     .eq('key', key)
     .single();
@@ -23,7 +23,7 @@ export async function setSupabaseKV<T>(key: string, value: T, ttlMs: number): Pr
   const expiresAt = new Date(Date.now() + ttlMs).toISOString();
 
   await supabase
-    .from('brapi_cache')
+    .from('data_cache')
     .upsert({
       key,
       value,

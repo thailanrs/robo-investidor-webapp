@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { PortfolioPosition } from "@/lib/portfolio";
 import { classifyAsset } from "@/lib/utils";
@@ -49,6 +49,24 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export function PortfolioPieChart({ positions }: PortfolioPieChartProps) {
   const [tipoAtivo, setTipoAtivo] = useState("todos");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Card className="col-span-1 border-neutral-800 bg-neutral-900 text-neutral-100 min-h-[400px]">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="h-6 w-32 bg-neutral-800 animate-pulse rounded" />
+        </CardHeader>
+        <CardContent className="flex items-center justify-center pt-6">
+          <div className="h-[280px] w-full bg-neutral-800/20 animate-pulse rounded-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!positions || positions.length === 0) {
     return (
@@ -112,8 +130,8 @@ export function PortfolioPieChart({ positions }: PortfolioPieChartProps) {
         </select>
       </CardHeader>
       <CardContent className="flex items-center justify-center pt-6">
-        <div className="h-[280px] w-full flex min-w-0">
-          <ResponsiveContainer width="60%" height="100%">
+        <div className="h-[280px] w-full flex min-w-0 min-h-0">
+          <ResponsiveContainer width="60%" height="100%" debounce={50} minWidth={0} minHeight={0}>
             <PieChart>
               <Pie
                 data={currentData}

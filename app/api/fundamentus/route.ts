@@ -5,9 +5,11 @@ export async function fetchFundamentusData(): Promise<string[]> {
   const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
 
+  console.log(`Chamando Edge Function: ${SUPABASE_URL}/functions/v1/fundamentus-scraper`);
   const response = await fetch(
     `${SUPABASE_URL}/functions/v1/fundamentus-scraper`,
     {
@@ -19,11 +21,21 @@ export async function fetchFundamentusData(): Promise<string[]> {
   );
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Erro ao chamar fundamentus-scraper: ${response.status} - ${errorText}`);
     throw new Error(`Failed to call fundamentus-scraper: ${response.status}`);
   }
 
-  const tickers: string[] = await response.json();
-  return tickers;
+  const data = await response.json();
+  if (data.error) {
+    console.error(`Erro retornado pela Edge Function: ${data.error}`);
+    throw new Error(data.error);
+  }
+
+  const tickers: string[] = data;
+  console.log(`Tickers recebidos da Edge Function: ${tickers?.length || 0}`);
+  
+  return (tickers || []).filter(t => !t.endsWith("12"));
 }
 
 export async function GET() {

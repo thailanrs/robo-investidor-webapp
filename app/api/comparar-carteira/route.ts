@@ -3,7 +3,15 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: Request) {
   try {
-    const { tickersUsuario, top15 } = await req.json();
+    let { tickersUsuario, top15 } = await req.json();
+
+    // Filtra ativos de subscrição da string de entrada (ex: "PETR4, ABCB12, WEGE3" -> "PETR4, WEGE3")
+    if (tickersUsuario) {
+      tickersUsuario = tickersUsuario
+        .split(/[,\s]+/)
+        .filter((t: string) => t && !t.toUpperCase().endsWith("12"))
+        .join(", ");
+    }
 
     if (!tickersUsuario || !top15 || top15.length === 0) {
       return NextResponse.json({ success: false, error: "Dados insuficientes para análise." }, { status: 400 });

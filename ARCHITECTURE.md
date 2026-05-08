@@ -1,8 +1,8 @@
-# Robô Investidor - Architecture & Tech Stack
-_Última atualização: 2026-05-01_
+# ElevenFinance - Architecture & Tech Stack
+_Última atualização: 2026-05-08_
 
 ## Visão Geral
-SaaS de gestão de patrimônio e análise quantitativa de ativos da B3 (Ações, FIIs e FIAGROs). O sistema combina a Fórmula Mágica de Joel Greenblatt com IA generativa para auxiliar na tomada de decisão. Integra a API **brapi.dev** como fonte primária de dados de mercado em tempo real.
+SaaS de gestão de patrimônio e análise quantitativa de ativos da B3 (Ações, FIIs e FIAGROs). O sistema combina a Fórmula Mágica de Joel Greenblatt com IA generativa para auxiliar na tomada de decisão. Utiliza **yahoo-finance2** como fonte primária de dados históricos e múltiplos, **Bolsai API** para indicadores fundamentalistas do mercado brasileiro, e **BCB SGS** para dados macroeconômicos (SELIC/CDI).
 
 ## Tech Stack
 * **Framework:** Next.js 15 (App Router, Turbopack)
@@ -10,8 +10,8 @@ SaaS de gestão de patrimônio e análise quantitativa de ativos da B3 (Ações,
 * **Estilização:** Tailwind CSS (Shadcn UI / v0 para componentes base)
 * **Backend & Auth:** Supabase (PostgreSQL, Row Level Security habilitado, `@supabase/ssr`)
 * **IA Generativa:** Google Gemini (gemini-2.5-flash) via `@google/generative-ai`
-* **Dados de Mercado:** brapi.dev SDK (`brapi`) — fonte primária para cotações, histórico, dividendos, fundamentalistas e macro
-* **Scraping Legado:** `cheerio` (Fundamentus) e `yahoo-finance2` — mantidos para ranking quantitativo até migração completa para brapi
+* **Dados de Mercado:** `yahoo-finance2` (cotações, histórico, dividendos, múltiplos), **Bolsai API** (fundamentalistas BR) e **BCB SGS** (macro SELIC/CDI)
+* **Scraping Legado:** `cheerio` (Fundamentus) — ranking quantitativo para Fórmula Mágica
 * **Data Fetching Client:** `@tanstack/react-query` (useQuery, useMutation, useQueryClient)
 * **Cache:** Memory (in-process Map) + Supabase KV (persistência entre deploys)
 * **Deploy:** Vercel
@@ -36,88 +36,71 @@ A autenticação segue o padrão **Server-First** para evitar deadlocks da Web L
 ## Estrutura de Pastas
 
 ```
-robo-investidor-webapp/
+eleven-finance/
 ├── app/
 │   ├── api/
-│   │   ├── quotes/route.ts              # Cotações em tempo real (ROB-37) ✅
-│   │   ├── assets/
-│   │   │   └── search/route.ts          # Autocomplete de ativos (ROB-48) ✅
-│   │   ├── history/
-│   │   │   └── [ticker]/route.ts        # Histórico OHLCV (ROB-49) ✅
+│   │   ├── analisar/route.ts             # Orquestração da análise quantitativa
+│   │   ├── macro/route.ts                # Câmbio (Yahoo) + indicadores macro (BCB SGS)
 │   │   ├── dividends/
-│   │   │   └── [ticker]/route.ts        # Dividendos e JCP (ROB-50) ✅
-│   │   ├── fundamentals/
-│   │   │   └── [ticker]/route.ts        # Dados fundamentalistas (ROB-51) ✅
-│   │   ├── macro/route.ts               # Câmbio + indicadores macro (ROB-52) ✅
-│   │   ├── fundamentus/route.ts         # Scraping Fundamentus (legado)
-│   │   └── cron/update-ranking/route.ts # Cron job diário (ROB-16) ✅
+│   │   │   ├── [ticker]/route.ts         # Dividendos do usuário
+│   │   │   └── sync/route.ts             # Sincronização automática de proventos
+│   │   ├── fundamentus/route.ts          # Scraping Fundamentus (ranking Fórmula Mágica)
+│   │   ├── portfolio/                    # Resumo e posições da carteira
+│   │   └── cron/update-ranking/route.ts  # Cron job diário (ROB-16) ✅
 │   ├── (auth)/
 │   ├── (app)/
 │   └── layout.tsx
 ├── components/
-│   ├── layout/                          # Sidebar, Header, UserDropdown
-│   ├── ui/                              # Componentes Shadcn/custom
-│   └── Providers.tsx                    # QueryClientProvider
+│   ├── layout/                           # Sidebar, Header, UserDropdown
+│   ├── ui/                               # Componentes Shadcn/custom
+│   └── Providers.tsx                     # QueryClientProvider
 ├── contexts/
 │   └── UserContext.tsx
-├── hooks/
-│   └── brapi/                           # Hooks React Query para brapi (próxima fase)
+├── hooks/                                # Custom hooks reutilizáveis
 ├── lib/
-│   ├── brapiClient.ts                   # Singleton SDK brapi (ROB-36) ✅
-│   ├── brapiCache.ts                    # getCached() memory+KV, TTLs (ROB-53) ✅
-│   ├── brapiErrors.ts                   # BrapiError, handleBrapiError (ROB-53) ✅
-│   ├── brapiLogger.ts                   # logBrapiRequest(), brapi_request_logs (ROB-53) ✅
-│   ├── dividendMatcher.ts               # matchDividendsWithUserEntries() (ROB-50) ✅
-│   ├── portfolio.ts                     # Engine preço médio / posição
-│   └── supabase/
+│   ├── yahooFinanceService.ts            # Análise de ativos via Yahoo Finance
+│   ├── dataCache.ts                      # Cache duplo memory+KV genérico ✅
+│   ├── dividendMatcher.ts                # matchDividendsWithUserEntries()
+│   ├── portfolio.ts                      # Engine preço médio / posição
+│   ├── services/
+│   │   ├── bolsaiService.ts              # API Bolsai (fundamentalistas BR + macro)
+│   │   └── dividendSyncService.ts        # Sincronização de dividendos via Yahoo Finance
+│   └── supabaseKv.ts                     # Key-Value store via Supabase (tabela data_cache)
 ├── types/
-│   ├── brapi.ts                         # Tipagem completa da camada brapi ✅
+│   ├── market.ts                         # Tipagem de dados de mercado (genérica)
 │   └── supabase.ts
 ├── utils/
-│   └── supabase/                        # server.ts, client.ts, middleware.ts
+│   └── supabase/                         # server.ts, client.ts, middleware.ts
 ├── supabase/
-│   └── migrations/                      # Migrations SQL versionadas
+│   └── migrations/                       # Migrations SQL versionadas
 └── public/
 ```
 
-## Camada de Dados de Mercado (brapi)
+## Camada de Dados de Mercado
 
-### Fluxo de uma Requisição
+### Fontes de Dados
 
-```
-Client Component
-  → fetch('/api/quotes?tickers=PETR4')
-    → app/api/quotes/route.ts
-      → getCached(key, fetcher, ttl)          [brapiCache.ts]
-        → brapiClient.quote(tickers)          [brapiClient.ts]
-      → logBrapiRequest(...)                  [brapiLogger.ts]
-      → NextResponse.json({ data, stale })
-```
+| Fonte | Uso | Pacote/API |
+|-------|-----|-----------|
+| **yahoo-finance2** | Cotações, histórico OHLCV, dividendos, múltiplos, câmbio | `yahoo-finance2` (npm) |
+| **Bolsai API** | Fundamentalistas BR (ações e FIIs), SELIC, CDI | `api.usebolsai.com` (REST) |
+| **Fundamentus** | Ranking quantitativo (Fórmula Mágica) | Scraping via Edge Function Supabase |
 
-### API Routes Brapi Disponíveis
-
-| Rota | Descrição | TTL Cache | Issue |
-|---|---|---|---|
-| `GET /api/quotes` | Cotações em tempo real | 5 min | ROB-37 ✅ |
-| `GET /api/assets/search` | Lista/autocomplete de ativos | 24h | ROB-48 ✅ |
-| `GET /api/history/[ticker]` | Histórico OHLCV | 1h | ROB-49 ✅ |
-| `GET /api/dividends/[ticker]` | Dividendos e JCP históricos | 12h | ROB-50 ✅ |
-| `GET /api/fundamentals/[ticker]` | Dados fundamentalistas | 24h | ROB-51 ✅ |
-| `GET /api/macro` | Câmbio (USD/BRL, EUR/BRL) + SELIC | 1h | ROB-52 ✅ |
-
-### Estratégia de Cache (ROB-53)
+### Estratégia de Cache
 
 * **Camada 1 — Memory**: Map in-process, zero latência, dura até restart do servidor
-* **Camada 2 — Supabase KV**: Persiste entre deploys/instâncias, tolerante a cold start
-* **Campo `stale`**: retornado em todos os responses; `true` indica dado servido do cache
+* **Camada 2 — Supabase KV**: Tabela `data_cache`, persiste entre deploys/instâncias
+* **Campo `stale`**: retornado em responses; `true` indica dado servido do cache
+* **Função `withCache()`**: em `lib/dataCache.ts`, usada por todas as fontes de dados
 
-### Tratamento de Erros
+### API Routes Disponíveis
 
-Todas as routes usam `handleBrapiError(error, ticker?)` que mapeia para:
-* `BrapiError` → 502 Bad Gateway
-* `RateLimitError` → 429 Too Many Requests
-* `AuthenticationError` → 401 Unauthorized
-* `NotFoundError` → 404 Not Found
+| Rota | Descrição | Fonte |
+|------|-----------|-------|
+| `GET /api/macro` | Câmbio (USD/BRL, EUR/BRL) + SELIC, CDI | Yahoo + Bolsai |
+| `GET /api/analisar` | Análise quantitativa completa (Fórmula Mágica + DY) | Fundamentus + Yahoo + Bolsai |
+| `GET /api/fundamentus` | Ranking preliminar Fórmula Mágica | Edge Function Supabase |
+| `GET /api/dividends/sync` | Sincronização de proventos do usuário | Yahoo Finance |
 
 ## Layout de UI
 * **Sidebar** (`components/layout/Sidebar.tsx`): Colapsável (ícone-only ↔ ícone+texto). Estado gerenciado no `AppLayoutClient`.
@@ -160,12 +143,11 @@ import { Providers } from "@/components/Providers";
 > ⚠️ **Regra de Reuso:** Nunca duplicar lógica de scraping, ranking ou dados de mercado.
 
 | Função | Arquivo | Descrição |
-|---|---|---|
+|--------|---------|-----------|
 | `fetchFundamentusData()` | `app/api/fundamentus/route.ts` | Scraping do Fundamentus, filtros e ranking Fórmula Mágica. Deve ser **importada** pelo cron job (ROB-16) — nunca reimplementada. |
-| `getCached()` | `lib/brapiCache.ts` | Cache duplo memory+KV. Usar em **todas** as routes brapi. |
-| `handleBrapiError()` | `lib/brapiErrors.ts` | Mapeia erros brapi para HTTP status. Usar no `catch` de todas as routes brapi. |
-| `logBrapiRequest()` | `lib/brapiLogger.ts` | Registra latência e cache hit em `brapi_request_logs`. Chamar após cada request brapi. |
-| `matchDividendsWithUserEntries()` | `lib/dividendMatcher.ts` | Compara dividendos brapi com lançamentos manuais do usuário. |
+| `analisarAtivo()` | `lib/yahooFinanceService.ts` | Análise profunda de um ativo via Yahoo Finance + Bolsai. |
+| `withCache()` | `lib/dataCache.ts` | Cache duplo memory+KV. Usar em **todas** as chamadas a fontes de dados externas. |
+| `matchDividendsWithUserEntries()` | `lib/dividendMatcher.ts` | Compara dividendos do Yahoo Finance com lançamentos manuais do usuário. |
 
 ## 🗂️ Migrations de Banco de Dados (CRÍTICO)
 
@@ -199,4 +181,4 @@ import { Providers } from "@/components/Providers";
 7. **Reuso de Código:** Nunca reimplementar funções já existentes. Ver seção "Funções Reutilizáveis" acima.
 8. **React Query:** Toda página que use `useQuery`, `useMutation` ou `useQueryClient` depende do `QueryClientProvider` no layout pai.
 9. **Scraping e Integrações Externas:** Toda chamada a sites com risco de bloqueio de IP por WAF (Fundamentus, B3) deve ser extraída para uma Edge Function no Supabase — nunca via API Routes da Vercel.
-10. **Brapi:** Nunca chamar `brapiClient` diretamente de componentes ou páginas. Sempre via API Route → `getCached()` → `brapiClient`. Isso garante cache centralizado e logging consistente.
+10. **Cache:** Usar `withCache()` de `lib/dataCache.ts` para todas as chamadas a fontes de dados externas (Yahoo Finance, Bolsai, etc.), garantindo cache centralizado.

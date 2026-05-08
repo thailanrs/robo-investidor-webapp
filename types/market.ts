@@ -1,4 +1,4 @@
-export interface BrapiQuote {
+export interface MarketQuote {
   symbol: string;
   shortName: string;
   longName: string;
@@ -28,8 +28,8 @@ export interface BrapiQuote {
   twoHundredDayAverageChangePercent: number;
 }
 
-export interface BrapiQuoteResponse {
-  results: BrapiQuote[];
+export interface QuoteResponse {
+  results: MarketQuote[];
   requestedAt: string;
   took: string;
 }

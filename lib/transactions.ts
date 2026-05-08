@@ -43,6 +43,20 @@ export async function insertTransaction(transaction: Omit<Transaction, 'id' | 'c
   return data?.[0] as Transaction;
 }
 
+export async function insertTransactions(transactions: Omit<Transaction, 'id' | 'created_at'>[]) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert(transactions)
+    .select();
+
+  if (error) {
+    throw new Error(`Erro ao inserir lote de transações: ${error.message}`);
+  }
+
+  return data as Transaction[];
+}
+
 export async function updateTransaction(id: string, transaction: Partial<Omit<Transaction, 'id' | 'created_at' | 'user_id'>>) {
   const supabase = createClient();
   const { data, error } = await supabase

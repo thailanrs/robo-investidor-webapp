@@ -4,13 +4,15 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchDividends, createDividend, deleteDividend, DividendType } from "@/lib/dividends";
 import { DividendForm } from "@/components/proventos/DividendForm";
+import { DividendSyncModal } from "@/components/proventos/DividendSyncModal";
 import { DividendBarChart } from "@/components/proventos/DividendBarChart";
-import { Plus, Trash2, Coins, TrendingUp, Vault } from "lucide-react";
+import { Plus, Trash2, Coins, TrendingUp, Vault, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProventosPage() {
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [tickerFilter, setTickerFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState<DividendType | "ALL">("ALL");
   const [chartPeriod, setChartPeriod] = useState<string>("1y");
@@ -81,13 +83,22 @@ export default function ProventosPage() {
           </h1>
           <p className="text-zinc-400 mt-1">Gerencie e analise sua renda passiva.</p>
         </div>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-        >
-          <Plus className="w-5 h-5" />
-          Lançar Provento
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsSyncModalOpen(true)}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-white/10 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all"
+          >
+            <RefreshCw className="w-5 h-5 text-emerald-400" />
+            Sincronizar B3
+          </button>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+          >
+            <Plus className="w-5 h-5" />
+            Lançar Provento
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -244,6 +255,10 @@ export default function ProventosPage() {
           onSubmit={async (data) => { await createMutation.mutateAsync(data); }}
           onCancel={() => setIsFormOpen(false)}
         />
+      )}
+
+      {isSyncModalOpen && (
+        <DividendSyncModal onClose={() => setIsSyncModalOpen(false)} />
       )}
     </div>
   );

@@ -31,7 +31,7 @@ export async function GET() {
     if (transactionsRes.error) throw transactionsRes.error;
     if (dividendsRes.error) throw dividendsRes.error;
 
-    const transactions = transactionsRes.data || [];
+    const transactions = (transactionsRes.data || []).filter((tx: any) => !tx.ticker.endsWith("12"));
     const dividends = dividendsRes.data || [];
 
     // 2. Calcular posições atuais, preço médio e fluxo de caixa

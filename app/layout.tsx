@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Robô Investidor",
+  title: "ElevenFinance",
   description: "SaaS de gestão de patrimônio e análise quantitativa",
 };
 

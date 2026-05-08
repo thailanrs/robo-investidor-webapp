@@ -67,6 +67,11 @@ export function PerformanceComparisonChart() {
   const [data, setData] = useState<any[]>([]);
   const [totals, setTotals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -125,6 +130,19 @@ export function PerformanceComparisonChart() {
     return ticks;
   };
 
+  if (!mounted) {
+    return (
+      <Card className="col-span-1 lg:col-span-3 border-zinc-800 bg-zinc-950 text-zinc-100 min-h-[400px]">
+        <CardHeader className="flex flex-row items-center justify-between pb-6">
+          <div className="h-8 w-48 bg-zinc-900 animate-pulse rounded" />
+        </CardHeader>
+        <CardContent>
+          <div className="h-[350px] w-full bg-zinc-900/50 animate-pulse rounded-xl" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="col-span-1 lg:col-span-3 border-zinc-800 bg-zinc-950 text-zinc-100 overflow-hidden relative">
       {/* Subtle background glow */}
@@ -164,8 +182,8 @@ export function PerformanceComparisonChart() {
             Sem dados suficientes para comparação.
           </div>
         ) : (
-          <div className="h-[350px] w-full min-w-0" style={{ position: 'relative' }}>
-            <ResponsiveContainer width="100%" height="100%" id="perf-chart-container">
+          <div className="h-[350px] w-full min-w-0 min-h-0" style={{ position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" debounce={50} minWidth={0} minHeight={0} id="perf-chart-container">
               <AreaChart
                 data={data}
                 margin={{ top: 0, right: 25, left: 20, bottom: 0 }}

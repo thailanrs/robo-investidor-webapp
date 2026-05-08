@@ -105,16 +105,20 @@ export async function GET() {
     // 9. Salvar no Histórico do Supabase
     if (finalistas.length > 0) {
       try {
-        const supabaseAdmin = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+        if (!serviceKey || !supabaseUrl) {
+          console.warn("⚠️ SUPABASE_SERVICE_ROLE_KEY não encontrada. O histórico de análise não será salvo no banco de dados.");
+        } else {
+          const supabaseAdmin = createClient(supabaseUrl, serviceKey);
         const { error: dbError } = await supabaseAdmin.from('historico_analises').insert([
           { dados_acoes: finalistas, resumo_ia: resumoIA }
         ]);
 
         if (dbError) {
           console.error("Erro ao salvar no Supabase:", dbError);
+          }
         }
       } catch(e) {
         console.error("Erro inesperado ao salvar no Supabase:", e);
