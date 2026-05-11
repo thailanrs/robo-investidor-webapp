@@ -9,6 +9,8 @@ _Última atualização: 2026-05-08_
 * `profiles`: id (references auth.users), nome_completo, avatar_url, data_atualizacao, nivel
 * `dividends`: id, user_id (references auth.users), ticker, type (enum: DIVIDENDO | JCP | RENDIMENTO_FII | AMORTIZACAO), amount, quantity, payment_date, notes, created_at, updated_at — **migration aplicada manualmente em produção em 29/04/2026 (ROB-13)**
 * `data_cache`: key, value (jsonb), expires_at (timestamptz) — **tabela KV genérica para cache de dados de mercado** (renomeada de `brapi_cache` em 2026-05-08)
+* `notifications`: id (uuid PK), user_id (references auth.users), type (varchar(50), ex: 'price_alert', 'dividend'), title (varchar(255)), message (text), read (boolean default false), created_at (timestamptz default now()), related_entity_id (uuid, opcional) — **migration atualizada em 2026-05-08 (ELE-6), migration de limpeza de índice órfão 20260508214500_drop_orphaned_notification_index.sql aplicada**, RLS habilitado com política de acesso por usuário (auth.uid() = user_id), índices em (user_id, read) e (created_at DESC), Supabase Realtime habilitado
+* `price_alerts`: id (uuid PK, default gen_random_uuid()), ticker (text, not null), target_price (numeric, not null), direction (enum: above/below, not null), user_id (uuid, references auth.users, not null), triggered_at (timestamptz, nullable), created_at (timestamptz, default now()) — **migration criada em 2026-05-08 (ELE-7)**, RLS habilitado com política de acesso por usuário (auth.uid() = user_id), índices em (user_id), (ticker), (triggered_at), (created_at DESC)
 * [NOVAS TABELAS DEVEM SER REGISTRADAS AQUI COM SEUS CAMPOS EXATOS]
 
 ## Arquitetura de Autenticação
@@ -33,6 +35,7 @@ _Última atualização: 2026-05-08_
 * [x] ROB-13 - CRUD de Proventos (Dividendos/JCP/FII) + Página `/proventos` com KPIs, Gráfico de Evolução, Tabela com Filtros (PR #22 mergeado em 29/04/2026)
 * [x] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
 * [x] Rota `/api/macro` — Câmbio (USD/BRL, EUR/BRL) via Yahoo Finance + SELIC/CDI via Bolsai API
+* [x] ELE-6 - Sistema de notificações in-app (Bell Icon, dropdown, Realtime, API /api/notifications)
 
 ### Funcionalidades Removidas/Migradas
 * ~~ROB-36 a ROB-53~~ — Integração brapi.dev removida em 2026-05-08. Dados de mercado migrados para **yahoo-finance2** (cotações, histórico, dividendos), **Bolsai API** (fundamentalistas BR) e **BCB SGS** (macro). Motivo: limitações do plano gratuito da brapi não supriam o volume de dados necessário. E Bolsai retornou 403 para macro.
