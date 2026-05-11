@@ -31,7 +31,7 @@ Exemplo: `20260429120000_create_dividends.sql`
 
 ### Checklist obrigatório antes de abrir PR com DDL
 - [ ] Arquivo `.sql` está em `./supabase/migrations/`
-- [ ] SQL é idempotente (`IF NOT EXISTS` onde aplicável)
+- [ ] SQL é idempotente (IF NOT EXISTS para tabelas/índices e bloco DO com EXCEPTION para ENUMs)
 - [ ] RLS habilitado na tabela (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`)
 - [ ] Política RLS criada com `auth.uid() = user_id`
 - [ ] Índices de performance criados para as colunas de filtro mais usadas
