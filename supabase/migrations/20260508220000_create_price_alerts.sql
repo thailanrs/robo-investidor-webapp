@@ -2,7 +2,12 @@
 -- Timestamp: 20260508220000
 
 -- 1. Criar ENUM para direction se não existir
-CREATE TYPE IF NOT EXISTS public.price_alert_direction AS ENUM ('above', 'below');
+DO $$ 
+BEGIN
+  CREATE TYPE public.price_alert_direction AS ENUM ('above', 'below');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- 2. Criar tabela price_alerts se não existir
 CREATE TABLE IF NOT EXISTS public.price_alerts (
