@@ -2,7 +2,7 @@
 
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { AlertTriangle, Trash2, Loader2, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/formatters";
@@ -49,9 +49,9 @@ export default function AlertsPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Crie alertas na página de detalhes de cada ativo.
               </p>
-              <Button asChild variant="outline">
-                <Link href="/ativos">Ver meus ativos</Link>
-              </Button>
+              <Link href="/ativos" className={buttonVariants({ variant: "outline" })}>
+                Ver meus ativos
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">

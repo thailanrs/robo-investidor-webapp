@@ -93,8 +93,8 @@ export function PriceAlertModal({ ticker, children }: PriceAlertModalProps) {
             </label>
             <Select
               value={form.watch("direction")}
-              onValueChange={(v: "above" | "below") =>
-                form.setValue("direction", v)
+              onValueChange={(v) =>
+                v && form.setValue("direction", v as "above" | "below")
               }
             >
               <SelectTrigger

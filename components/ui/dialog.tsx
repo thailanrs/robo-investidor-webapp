@@ -46,21 +46,22 @@ Dialog.displayName = "Dialog";
 
 const DialogTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
->(({ children, onClick, ...props }, ref) => {
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
+>(({ children, onClick, asChild, ...props }, ref) => {
   const { open, onOpenChange } = React.useContext(DialogContext);
+  const Comp = asChild ? Slot : "button";
   return (
-    <button
-      ref={ref}
+    <Comp
+      ref={ref as any}
       data-state={open ? "open" : "closed"}
-      onClick={(e) => {
+      onClick={(e: any) => {
         onOpenChange?.(!open);
         onClick?.(e);
       }}
       {...props}
     >
       {children}
-    </button>
+    </Comp>
   );
 });
 DialogTrigger.displayName = "DialogTrigger";
