@@ -4,10 +4,10 @@ import { createClient } from "@/utils/supabase/server";
 // DELETE /api/price-alerts/:id - Delete a price alert
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const { id } = params;
+  const { id } = await params;
 
   // Get current user
   const {
