@@ -1,9 +1,7 @@
-"use client";
-
-import React, { useEffect, useRef } from "react";
-import { Menu, Search, Bell, Settings } from "lucide-react";
-import { UserDropdown } from "./UserDropdown";
+import React from "react";
 import Link from "next/link";
+import { Bell } from "lucide-react";
+import { UserDropdown } from "./UserDropdown";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -19,19 +17,18 @@ export function Header({ onMenuClick }: HeaderProps) {
         onClick={onMenuClick}
       >
         <span className="sr-only">Open sidebar</span>
-        <Menu className="h-6 w-6" aria-hidden="true" />
+        <Bell className="h-6 w-6" />
       </button>
 
       {/* Separator for mobile */}
       <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 md:hidden" aria-hidden="true" />
 
       <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
-
         {/* SearchBar - Glassmorphism */}
         <div className="flex-1 flex justify-center">
           <div className="w-full max-w-lg relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-zinc-400 group-focus-within:text-emerald-500 transition-colors" />
+              <svg className="h-4 w-4 text-zinc-400 group-focus-within:text-emerald-500 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
             </div>
             <input
               type="text"
@@ -43,13 +40,13 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         {/* Right side icons & User */}
         <div className="flex items-center gap-x-2 sm:gap-x-4">
-
-          <button className="relative text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full p-2 transition-all duration-150">
-            <span className="sr-only">Notificações</span>
+          <Link
+            href="/alertas"
+            className="relative text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-full p-2 transition-all duration-150"
+          >
+            <span className="sr-only">Alertas de Preço</span>
             <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-950" />
-          </button>
-
+          </Link>
 
           <div className="hidden sm:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-2" aria-hidden="true" />
 

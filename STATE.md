@@ -1,5 +1,5 @@
 # Estado Atual do Projeto (State of Project)
-_Última atualização: 2026-05-08_
+_Última atualização: 2026-05-11_
 
 ## Tabelas no Supabase (Database Schema)
 * `ideal_portfolio_snapshots`: id (uuid, PK), snapshot_date (date, not null), tickers (jsonb, not null), created_at (timestamptz, default now())
@@ -36,6 +36,8 @@ _Última atualização: 2026-05-08_
 * [x] ROB-16 - Cron Job Diário (`/api/cron/update-ranking`, schedule: `0 21 * * 1-5` UTC = 18h BRT, dias úteis)
 * [x] Rota `/api/macro` — Câmbio (USD/BRL, EUR/BRL) via Yahoo Finance + SELIC/CDI via Bolsai API
 * [x] ELE-6 - Sistema de notificações in-app (Bell Icon, dropdown, Realtime, API /api/notifications)
+* [x] ELE-7 - Sistema de alertas de preço por e-mail (API routes, Edge Function, UI modal/lista, pg_cron schedule)
+* [x] ELE-12 - Correção de erros na tela de /dashboard (com revert parcial da ELE-7, re-implementado em ELE-15)
 
 ### Funcionalidades Removidas/Migradas
 * ~~ROB-36 a ROB-53~~ — Integração brapi.dev removida em 2026-05-08. Dados de mercado migrados para **yahoo-finance2** (cotações, histórico, dividendos), **Bolsai API** (fundamentalistas BR) e **BCB SGS** (macro). Motivo: limitações do plano gratuito da brapi não supriam o volume de dados necessário. E Bolsai retornou 403 para macro.
